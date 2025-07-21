@@ -48,9 +48,8 @@ $$
 **Regret:**
 
 $$
-\text{Regret}(T) = T \mu^* - \mathbb{E}\left[ \sum_{t=1}^T r_t \right]
+\text{Regret}(T) = T \mu^* - \mathbb{E}\left[ \sum_{t=1}^T r_t \right], \quad \mu^* = \max_i \mu_i
 $$
-where $\mu^* = \max_i \mu_i$.
 
 ---
 
