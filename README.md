@@ -59,42 +59,51 @@ where $\mu^* = \max_i \mu_i$.
 #### Random Policy
 - **Description:** Select an arm uniformly at random at each step.
 - **Math:**
+
 $$
 P(a_t = i) = \frac{1}{K} \quad \forall i
 $$
+
 - **Pros:** Simple, ensures exploration.
 - **Cons:** Ignores past information, high regret.
 
 #### Epsilon-Greedy Policy
 - **Description:** With probability $\epsilon$, select a random arm (exploration); with probability $1-\epsilon$, select the arm with the highest estimated mean reward (exploitation).
 - **Math:**
+
 $$
 Q_t(i) = \frac{1}{N_t(i)} \sum_{s=1}^{t} r_s \cdot \mathbb{I}[a_s = i]
 $$
+
 $$
 a_t = \begin{cases}
 \text{random arm} & \text{with probability } \epsilon \\
 \arg\max_i Q_t(i) & \text{with probability } 1 - \epsilon
 \end{cases}
 $$
+
 - **Pros:** Balances exploration and exploitation, simple.
 - **Cons:** Fixed $\epsilon$ may not be optimal, does not account for uncertainty.
 
 #### Epsilon-Greedy with Decay
 - **Description:** Same as Epsilon-Greedy, but $\epsilon$ decreases over time.
 - **Math:**
+
 $$
 \epsilon_t = \max(\epsilon_{\text{min}}, \epsilon_0 \cdot \text{decay}^t)
 $$
+
 - **Pros:** Adapts exploration rate, often achieves lower regret.
 - **Cons:** Requires tuning decay schedule.
 
 #### Softmax (Boltzmann) Policy
 - **Description:** Selects arms with probability proportional to $\exp(Q_i / \tau)$, where $Q_i$ is the estimated value and $\tau$ is the temperature parameter.
 - **Math:**
+
 $$
 P(a = i) = \frac{\exp(Q_i / \tau)}{\sum_{j=1}^K \exp(Q_j / \tau)}
 $$
+
 - **Pros:** Smoothly interpolates between exploration and exploitation; all arms are always explored, but better arms are favored.
 - **Cons:** Requires tuning of $\tau$; can be sensitive to the scale of $Q_i$.
 - **Usage Example (Pseudocode):**
