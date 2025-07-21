@@ -1,99 +1,142 @@
 # Multi-Armed Bandit Reinforcement Learning Project
 
-A simple implementation of Multi-Armed Bandit (MAB) environments for reinforcement learning experimentation.
+## Table of Contents
+- [Introduction](#introduction)
+- [Theory: The Multi-Armed Bandit Problem](#theory-the-multi-armed-bandit-problem)
+  - [Mathematical Formulation](#mathematical-formulation)
+  - [Algorithmic Approaches](#algorithmic-approaches)
+    - [Random Policy](#random-policy)
+    - [Epsilon-Greedy Policy](#epsilon-greedy-policy)
+    - [Epsilon-Greedy with Decay](#epsilon-greedy-with-decay)
+- [Code Structure and Usage](#code-structure-and-usage)
+  - [Project Structure](#project-structure)
+  - [How to Run Experiments](#how-to-run-experiments)
+  - [Adding New Algorithms or Experiments](#adding-new-algorithms-or-experiments)
+- [References](#references)
 
-## Features
+---
 
-- **Flexible Arm Design**: Each arm can have different reward distributions (normal, bernoulli, uniform)
-- **Environment Class**: Complete MAB environment with pull mechanics and statistics
-- **Interactive Play**: Play against the bandit manually
-- **Algorithm Demo**: See epsilon-greedy in action
-- **Reproducible**: Seed-based randomization for consistent experiments
+## Introduction
 
-## Quick Start
+This project implements and compares algorithms for the Multi-Armed Bandit (MAB) problem, a foundational scenario in reinforcement learning and online decision-making. The codebase is modular, extensible, and includes interactive demos, experiment classes, and plotting utilities.
 
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+---
 
-2. Test the environment:
-```bash
-python mab_environment.py
-```
+## Theory: The Multi-Armed Bandit Problem
 
-3. Play with the bandit interactively:
-```bash
-python play_with_bandit.py
-```
+### What is the Multi-Armed Bandit Problem?
 
-## Usage Examples
+The Multi-Armed Bandit (MAB) problem models a scenario where an agent must choose between multiple options ("arms"), each with an unknown reward distribution. The agent's goal is to maximize cumulative reward over time by balancing:
+- **Exploration:** Trying different arms to learn their rewards.
+- **Exploitation:** Choosing the arm believed to yield the highest reward.
 
-### Basic Environment Usage
+This models real-world problems like online advertising, clinical trials, and recommendation systems.
 
-```python
-from mab_environment import MultiArmedBandit, Arm
+### Mathematical Formulation
 
-# Create arms with different reward distributions
-arms = [
-    Arm("Poor", mean=0.2, std=0.3),
-    Arm("Medium", mean=0.5, std=0.3),
-    Arm("Good", mean=0.8, std=0.3)
-]
+- Let there be $K$ arms, indexed by $i = 1, 2, ..., K$.
+- Each arm $i$ provides a reward $r_t$ at time $t$, drawn from an unknown distribution with mean $\mu_i$.
+- The agent selects an arm $a_t$ at each time step $t$, observes the reward, and updates its strategy.
 
-# Create the bandit
-bandit = MultiArmedBandit(arms, seed=42)
+**Objective:**
 
-# Pull an arm
-reward, valid = bandit.pull_arm(0)
-print(f"Reward: {reward}")
+$$
+\max_{a_1, ..., a_T} \mathbb{E}\left[ \sum_{t=1}^T r_t \right]
+$$
 
-# Get bandit information
-info = bandit.get_info()
-print(f"Optimal arm: {info['optimal_arm']}")
-```
+**Regret:**
 
-### Random Bandit Creation
+$$
+\text{Regret}(T) = T \mu^* - \mathbb{E}\left[ \sum_{t=1}^T r_t \right]
+$$
+where $\mu^* = \max_i \mu_i$.
 
-```python
-# Create a random 5-armed bandit
-bandit = MultiArmedBandit.create_random_bandit(
-    n_arms=5, 
-    mean_range=(0, 1), 
-    std=0.3, 
-    seed=123
-)
-```
+---
 
-## Project Structure
+### Algorithmic Approaches
 
-- `mab_environment.py`: Core MAB environment and Arm classes
-- `play_with_bandit.py`: Interactive script to play with the bandit
-- `requirements.txt`: Python dependencies
-- `components.md`: Project component planning
+#### Random Policy
+- **Description:** Select an arm uniformly at random at each step.
+- **Math:**
+  $$
+  P(a_t = i) = \frac{1}{K} \quad \forall i
+  $$
+- **Pros:** Simple, ensures exploration.
+- **Cons:** Ignores past information, high regret.
 
-## Next Steps
+#### Epsilon-Greedy Policy
+- **Description:** With probability $\epsilon$, select a random arm (exploration); with probability $1-\epsilon$, select the arm with the highest estimated mean reward (exploitation).
+- **Math:**
+  $$
+  Q_t(i) = \frac{1}{N_t(i)} \sum_{s=1}^{t} r_s \cdot \mathbb{I}[a_s = i]
+  $$
+  $$
+  a_t = \begin{cases}
+  \text{random arm} & \text{with probability } \epsilon \\
+  \arg\max_i Q_t(i) & \text{with probability } 1 - \epsilon
+  \end{cases}
+  $$
+- **Pros:** Balances exploration and exploitation, simple.
+- **Cons:** Fixed $\epsilon$ may not be optimal, does not account for uncertainty.
 
-This is the foundation for your RL project. Next components to implement:
+#### Epsilon-Greedy with Decay
+- **Description:** Same as Epsilon-Greedy, but $\epsilon$ decreases over time.
+- **Math:**
+  $$
+  \epsilon_t = \max(\epsilon_{\text{min}}, \epsilon_0 \cdot \text{decay}^t)
+  $$
+- **Pros:** Adapts exploration rate, often achieves lower regret.
+- **Cons:** Requires tuning decay schedule.
 
-1. **Policy Interface**: Abstract base class for algorithms
-2. **Algorithm Implementations**: 
-   - Random selection
-   - Epsilon-greedy
-   - Upper Confidence Bound (UCB)
-   - Thompson Sampling
-3. **Visualization**: Real-time plotting and comparison tools
-4. **Evaluation Framework**: Regret analysis and performance metrics
+---
 
-## Playing with the Environment
+## Code Structure and Usage
 
-The interactive script (`play_with_bandit.py`) offers two modes:
+### Project Structure
 
-1. **Interactive Play**: You manually choose which arm to pull
-2. **Algorithm Demo**: Watch an epsilon-greedy algorithm play automatically
+- `mab_environment.py`: Core MAB environment and Arm classes.
+- `policies.py`: Policy (algorithm) classes, including EpsilonGreedy, RandomPolicy, etc.
+- `experiment.py`: Modular Experiment class for running and comparing policies.
+- `play_with_bandit.py`: Main script for interactive play, demos, and running experiments.
+- `requirements.txt`: Python dependencies.
+- `README.md`: This documentation.
+- `components.md`: Project planning notes.
 
-This lets you:
-- Experience the exploration vs exploitation trade-off
-- See how algorithms learn over time
-- Understand regret and optimal performance
-- Experiment with different bandit configurations 
+### How to Run Experiments
+
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Run the main script:**
+   ```bash
+   python play_with_bandit.py
+   ```
+   - Choose from interactive play, policy demos, or sample experiments.
+   - Use `--mode` to run a specific experiment directly.
+
+3. **Sample Multi-Policy Experiment:**
+   - Compares Random and several EpsilonGreedy configurations on a 10-armed bandit.
+   - Plots average accumulated reward for each policy.
+
+### Adding New Algorithms or Experiments
+
+- **To add a new policy:**
+  - Implement a new class in `policies.py` inheriting from `Policy`.
+  - Add it to the `policies` list in your experiment setup.
+- **To add a new experiment:**
+  - Create a new function in `play_with_bandit.py` using the `Experiment` class.
+  - Specify arms, policies, and parameters as needed.
+
+---
+
+## References
+
+- Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction. (Ch. 2)
+- Lattimore, T., & Szepesvári, C. (2020). Bandit Algorithms. Cambridge University Press.
+- Auer, P., Cesa-Bianchi, N., & Fischer, P. (2002). Finite-time Analysis of the Multiarmed Bandit Problem. Machine Learning, 47(2-3), 235–256.
+
+---
+
+*This README is self-contained and provides both the theoretical background and practical instructions for using and extending the Multi-Armed Bandit project.* 
+
