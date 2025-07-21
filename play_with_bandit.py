@@ -6,7 +6,7 @@ Interactive script to play with the Multi-Armed Bandit environment.
 import numpy as np
 import argparse
 from mab_environment import MultiArmedBandit, Arm
-from policies import EpsilonGreedy, RandomPolicy, GreedyPolicy
+from policies import EpsilonGreedy, RandomPolicy, GreedyPolicy, UCBPolicy
 from colorama import init, Fore, Style
 import matplotlib.pyplot as plt
 from experiment import Experiment
@@ -336,13 +336,30 @@ def run_sample_multi_policy_experiment():
     print(f"{Fore.GREEN}Sample multi-policy experiment complete!")
 
 
+def run_ucb_vs_epsilon_experiment():
+    exp_name = "UCB vs EpsilonGreedy: 10-Armed Bandit Comparison"
+    print(f"{Fore.CYAN}Running experiment: {exp_name}")
+    arms = [Arm(name=f"Arm_{i}", mean=0.1 * (i + 1), std=0.1) for i in range(10)]
+    bandit = MultiArmedBandit(arms, seed=42)
+    policies = [
+        ("UCB (c=2.0)", UCBPolicy(n_arms=10, c=2.0, seed=42)),
+        ("UCB (c=0.5)", UCBPolicy(n_arms=10, c=0.5, seed=42)),
+        ("EpsilonGreedy (eps=0.1, decay=0.99, min=0.01)", EpsilonGreedy(n_arms=10, epsilon=0.1, decay=0.99, min_epsilon=0.01, seed=42)),
+        ("EpsilonGreedy (eps=0.3, decay=0.995, min=0.01)", EpsilonGreedy(n_arms=10, epsilon=0.3, decay=0.995, min_epsilon=0.01, seed=42)),
+    ]
+    exp = Experiment(bandit, policies, n_iterations=10000, seed=42, name=exp_name)
+    exp.run()
+    exp.plot(show_avg=True)
+    print(f"{Fore.GREEN}UCB vs EpsilonGreedy experiment complete!")
+
+
 def main():
     """Main function with command line argument parsing."""
     parser = argparse.ArgumentParser(description='Multi-Armed Bandit Simulator')
     parser.add_argument('--iterations', '-i', type=int, default=200,
                        help='Number of iterations to simulate (default: 200)')
-    parser.add_argument('--mode', '-m', type=int, choices=[1, 2, 3, 4, 5], default=None,
-                       help='Mode: 1=Interactive, 2=Policy comparison, 3=Single policy, 4=Sample experiment (10 arms, EpsilonGreedy), 5=Sample multi-policy experiment (default: interactive)')
+    parser.add_argument('--mode', '-m', type=int, choices=[1, 2, 3, 4, 5, 6], default=None,
+                       help='Mode: 1=Interactive, 2=Policy comparison, 3=Single policy, 4=Sample experiment (10 arms, EpsilonGreedy), 5=Sample multi-policy experiment, 6=UCB vs EpsilonGreedy')
     
     args = parser.parse_args()
     
@@ -355,10 +372,11 @@ def main():
         print("3. Single policy demo")
         print("4. Sample experiment (10 arms, EpsilonGreedy)")
         print("5. Sample multi-policy experiment")
+        print("6. UCB vs EpsilonGreedy experiment")
         
         while True:
             try:
-                choice = input("\nChoose an option (1-5): ").strip()
+                choice = input("\nChoose an option (1-6): ").strip()
                 if choice == "1":
                     interactive_play()
                     break
@@ -374,8 +392,11 @@ def main():
                 elif choice == "5":
                     run_sample_multi_policy_experiment()
                     break
+                elif choice == "6":
+                    run_ucb_vs_epsilon_experiment()
+                    break
                 else:
-                    print("Please enter 1, 2, 3, 4, or 5")
+                    print("Please enter 1, 2, 3, 4, 5, or 6")
             except KeyboardInterrupt:
                 print("\nGoodbye!")
                 break
@@ -390,6 +411,8 @@ def main():
             run_sample_experiment()
         elif args.mode == 5:
             run_sample_multi_policy_experiment()
+        elif args.mode == 6:
+            run_ucb_vs_epsilon_experiment()
 
 
 if __name__ == "__main__":

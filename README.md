@@ -88,6 +88,21 @@ where $\mu^* = \max_i \mu_i$.
 - **Pros:** Adapts exploration rate, often achieves lower regret.
 - **Cons:** Requires tuning decay schedule.
 
+#### UCB (Upper Confidence Bound) Policy
+- **Description:** Selects the arm with the highest upper confidence bound, balancing estimated reward and uncertainty. Encourages exploration of less-sampled arms.
+- **Math:**
+  $$
+  \text{UCB}_t(i) = Q_t(i) + c \sqrt{\frac{\ln t}{N_t(i)}}
+  $$
+  where $Q_t(i)$ is the estimated mean reward for arm $i$, $N_t(i)$ is the number of times arm $i$ has been selected, $t$ is the current time step, and $c$ is an exploration parameter.
+- **Action selection:**
+  $$
+  a_t = \arg\max_i \text{UCB}_t(i)
+  $$
+- **Pros:** Theoretically grounded, achieves low regret, automatically balances exploration and exploitation.
+- **Cons:** Requires tuning of $c$, can be sensitive to reward scaling, assumes rewards are bounded.
+
+
 ---
 
 ## Code Structure and Usage
