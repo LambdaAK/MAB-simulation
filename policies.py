@@ -211,6 +211,35 @@ class UCBPolicy(Policy):
         return info
 
 
+class SoftmaxPolicy(Policy):
+    """
+    Softmax (Boltzmann) exploration policy.
+    Selects arms with probability proportional to exp(Q_i / tau).
+    """
+    def __init__(self, n_arms: int, tau: float = 0.1, seed: Optional[int] = None):
+        super().__init__(n_arms)
+        self.tau = tau
+        if seed is not None:
+            np.random.seed(seed)
+
+    def select_action(self) -> int:
+        # Avoid division by zero
+        if self.tau <= 0:
+            # Greedy selection
+            best_actions = np.where(self.action_values == np.max(self.action_values))[0]
+            return np.random.choice(best_actions)
+        # Compute softmax probabilities
+        max_q = np.max(self.action_values)  # for numerical stability
+        exp_q = np.exp((self.action_values - max_q) / self.tau)
+        probs = exp_q / np.sum(exp_q)
+        return np.random.choice(self.n_arms, p=probs)
+
+    def get_info(self) -> Dict[str, Any]:
+        info = super().get_info()
+        info['tau'] = self.tau
+        return info
+
+
 # Example usage and testing
 if __name__ == "__main__":
     from mab_environment import MultiArmedBandit, Arm

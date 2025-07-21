@@ -6,7 +6,7 @@ Interactive script to play with the Multi-Armed Bandit environment.
 import numpy as np
 import argparse
 from mab_environment import MultiArmedBandit, Arm
-from policies import EpsilonGreedy, RandomPolicy, GreedyPolicy, UCBPolicy
+from policies import EpsilonGreedy, RandomPolicy, GreedyPolicy, UCBPolicy, SoftmaxPolicy
 from colorama import init, Fore, Style
 import matplotlib.pyplot as plt
 from experiment import Experiment
@@ -337,7 +337,7 @@ def run_sample_multi_policy_experiment():
 
 
 def run_ucb_vs_epsilon_experiment():
-    exp_name = "UCB vs EpsilonGreedy: 10-Armed Bandit Comparison"
+    exp_name = "UCB vs EpsilonGreedy vs Softmax: 10-Armed Bandit Comparison"
     print(f"{Fore.CYAN}Running experiment: {exp_name}")
     arms = [Arm(name=f"Arm_{i}", mean=0.1 * (i + 1), std=0.1) for i in range(10)]
     bandit = MultiArmedBandit(arms, seed=42)
@@ -346,11 +346,13 @@ def run_ucb_vs_epsilon_experiment():
         ("UCB (c=0.5)", UCBPolicy(n_arms=10, c=0.5, seed=42)),
         ("EpsilonGreedy (eps=0.1, decay=0.99, min=0.01)", EpsilonGreedy(n_arms=10, epsilon=0.1, decay=0.99, min_epsilon=0.01, seed=42)),
         ("EpsilonGreedy (eps=0.3, decay=0.995, min=0.01)", EpsilonGreedy(n_arms=10, epsilon=0.3, decay=0.995, min_epsilon=0.01, seed=42)),
+        ("Softmax (tau=0.1)", SoftmaxPolicy(n_arms=10, tau=0.1, seed=42)),
+        ("Softmax (tau=0.5)", SoftmaxPolicy(n_arms=10, tau=0.5, seed=42)),
     ]
     exp = Experiment(bandit, policies, n_iterations=10000, seed=42, name=exp_name)
     exp.run()
     exp.plot(show_avg=True)
-    print(f"{Fore.GREEN}UCB vs EpsilonGreedy experiment complete!")
+    print(f"{Fore.GREEN}UCB vs EpsilonGreedy vs Softmax experiment complete!")
 
 
 def main():

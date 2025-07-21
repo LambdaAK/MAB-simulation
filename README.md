@@ -8,6 +8,7 @@
     - [Random Policy](#random-policy)
     - [Epsilon-Greedy Policy](#epsilon-greedy-policy)
     - [Epsilon-Greedy with Decay](#epsilon-greedy-with-decay)
+    - [Softmax (Boltzmann) Policy](#softmax-boltzmann-policy)
 - [Code Structure and Usage](#code-structure-and-usage)
   - [Project Structure](#project-structure)
   - [How to Run Experiments](#how-to-run-experiments)
@@ -102,6 +103,22 @@ where $\mu^* = \max_i \mu_i$.
 - **Pros:** Theoretically grounded, achieves low regret, automatically balances exploration and exploitation.
 - **Cons:** Requires tuning of $c$, can be sensitive to reward scaling, assumes rewards are bounded.
 
+#### Softmax (Boltzmann) Policy
+- **Description:** Selects arms with probability proportional to $\exp(Q_i / \tau)$, where $Q_i$ is the estimated value and $\tau$ is the temperature parameter.
+- **Math:**
+  $$
+  P(a = i) = \frac{\exp(Q_i / \tau)}{\sum_{j=1}^K \exp(Q_j / \tau)}
+  $$
+- **Pros:** Smoothly interpolates between exploration and exploitation; all arms are always explored, but better arms are favored.
+- **Cons:** Requires tuning of $\tau$; can be sensitive to the scale of $Q_i$.
+- **Usage Example (Pseudocode):**
+  ```python
+  import numpy as np
+  def softmax_policy(Q, tau):
+      exp_Q = np.exp(Q / tau)
+      probs = exp_Q / np.sum(exp_Q)
+      return np.random.choice(len(Q), p=probs)
+  ```
 
 ---
 
