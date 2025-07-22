@@ -326,13 +326,7 @@ python play_with_contextual_bandit.py
 └── README.md                   # This file
 ```
 
-## Experiments
-
-1. Epsilon greedy contextual bandits - 10 arms, 5-d context vector, 10 agents with different epsilon, epsilon decay, epsilon minimum values. 1000 iterations. See the effects of the hyperparameters on avg acc. reward and regret over time.
-
-2. Simple model demo - random vs epsilon-greedy vs epsilon-greedy with UCB vs thompson sampling vs softmax
-
-3. Context-Aware vs. Context-Ignorant Bandit Algorithms
+## Experiment 1: Context-Aware vs. Context-Ignorant Bandit Algorithms
 
 This experiment demonstrates the importance of using context in multi-armed bandit problems. We compare several algorithms on a 5-armed contextual bandit with 5-dimensional context vectors, where each arm's expected reward is a different linear function of the context.
 
