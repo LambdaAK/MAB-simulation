@@ -794,6 +794,46 @@ class ImprovedNeuralNetworkContextualPolicy(ContextualPolicy):
         }
 
 
+class ContextlessEpsilonGreedy(ContextualPolicy):
+    """
+    Epsilon-Greedy policy that ignores the context vector and learns a mean reward for each arm.
+    """
+    def __init__(self, n_arms: int, context_dim: int, epsilon: float = 0.1, seed: Optional[int] = None):
+        super().__init__(n_arms, context_dim)
+        self.epsilon = epsilon
+        self.seed = seed
+        if seed is not None:
+            np.random.seed(seed)
+        self._reset_impl()
+
+    def select_action(self, context: np.ndarray) -> int:
+        if np.random.random() < self.epsilon:
+            return np.random.randint(self.n_arms)
+        else:
+            return int(np.argmax(self.arm_means))
+
+    def _update_impl(self, context: np.ndarray, action: int, reward: float):
+        # Incremental mean update
+        self.arm_counts[action] += 1
+        n = self.arm_counts[action]
+        old_mean = self.arm_means[action]
+        self.arm_means[action] += (reward - old_mean) / n
+
+    def _reset_impl(self):
+        self.arm_means = np.zeros(self.n_arms)
+        self.arm_counts = np.zeros(self.n_arms, dtype=int)
+
+    def get_info(self) -> Dict[str, Any]:
+        info = super().get_info()
+        info.update({
+            'policy_type': 'ContextlessEpsilonGreedy',
+            'epsilon': self.epsilon,
+            'arm_means': self.arm_means.copy(),
+            'arm_counts': self.arm_counts.copy(),
+        })
+        return info
+
+
 # Example usage and testing
 if __name__ == "__main__":
     from contextual_mab_environment import ContextualMultiArmedBandit
@@ -823,3 +863,4 @@ if __name__ == "__main__":
     
     print(f"Final total reward: {total_reward:.3f}")
     print(f"Policy info: {policy.get_info()}") 
+

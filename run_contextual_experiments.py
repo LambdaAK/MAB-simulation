@@ -5,8 +5,8 @@ Experiment script for testing contextual bandit algorithms.
 
 import numpy as np
 import argparse
-from contextual_mab_environment import ContextualMultiArmedBandit, ContextualArm, LinearNormalDistribution
-from contextual_policies import LinearThompsonSampling, EpsilonGreedyLinear, RandomContextualPolicy, NeuralNetworkContextualPolicy, ImprovedNeuralNetworkContextualPolicy
+from contextual_mab_environment import ContextualMultiArmedBandit, ContextualArm, LinearNormalDistribution, CustomDistribution
+from contextual_policies import LinearThompsonSampling, EpsilonGreedyLinear, RandomContextualPolicy, NeuralNetworkContextualPolicy, ImprovedNeuralNetworkContextualPolicy, ContextlessEpsilonGreedy
 from colorama import init, Fore, Style
 import matplotlib.pyplot as plt
 from typing import List, Dict, Any
@@ -48,6 +48,39 @@ def create_experiment_bandit(n_arms: int = 5, context_dim: int = 5, seed: int = 
         
         print(f"{Fore.GREEN}  Arm {i}: bias={weights[0]:.2f}, weights={weights[1:context_dim+1]}, std={std:.2f}")
     
+    return ContextualMultiArmedBandit(arms, seed=seed)
+
+
+def create_nonlinear_experiment_bandit(n_arms: int = 5, context_dim: int = 5, seed: int = 123):
+    """Create a contextual bandit with at least one nonlinear arm."""
+    np.random.seed(seed)
+    arms = []
+    for i in range(n_arms):
+        if i == 0:
+            # Arm 0: Linear
+            weights = np.array([0.5] * context_dim)
+            dist = LinearNormalDistribution(context_dim, weights, std=0.3)
+        elif i == 1:
+            # Arm 1: Quadratic (nonlinear)
+            def quad_func(context):
+                return 1.0 + 0.5 * np.sum(context ** 2) + np.random.normal(0, 0.3)
+            dist = CustomDistribution(context_dim, quad_func)
+        elif i == 2:
+            # Arm 2: Sinusoidal (nonlinear)
+            def sin_func(context):
+                return np.sin(np.sum(context)) + np.random.normal(0, 0.3)
+            dist = CustomDistribution(context_dim, sin_func)
+        elif i == 3:
+            # Arm 3: Linear with different weights
+            weights = np.array([-0.5] * context_dim)
+            dist = LinearNormalDistribution(context_dim, weights, std=0.3)
+        else:
+            # Arm 4: Random nonlinear
+            def rand_func(context):
+                return np.cos(context[0]) + 0.2 * np.sum(context) + np.random.normal(0, 0.3)
+            dist = CustomDistribution(context_dim, rand_func)
+        arm = ContextualArm(f"Arm_{i}", dist)
+        arms.append(arm)
     return ContextualMultiArmedBandit(arms, seed=seed)
 
 
@@ -617,39 +650,23 @@ def interactive_experiment():
     """Interactive experiment mode."""
     print(f"{Fore.GREEN}Interactive Contextual Bandit Experiment")
     print(f"{Fore.GREEN}Choose an experiment type:")
-    print("1. Policy comparison (all algorithms including Neural Network)")
-    print("2. Thompson Sampling detailed analysis")
-    print("3. Neural Network specific analysis")
-    print("4. Train and watch model decisions")
-    print("5. Long-term training comparison (Linear TS vs Neural Network)")
+    print("1. Context-aware vs. context-ignorant policies")
+    print("2. Nonlinear context bandit demo (neural network advantage)")
     
     while True:
         try:
-            choice = input(f"\n{Fore.BLUE}Enter choice (1-5): {Style.RESET_ALL}").strip()
+            choice = input(f"\n{Fore.BLUE}Enter choice (1-2): {Style.RESET_ALL}").strip()
             
             if choice == "1":
-                n_iter = int(input(f"{Fore.YELLOW}Number of iterations (default 2000): {Style.RESET_ALL}") or "2000")
-                run_policy_comparison_experiment(n_iter)
+                n_iter = int(input(f"{Fore.YELLOW}Number of iterations (default 1000): {Style.RESET_ALL}") or "1000")
+                run_context_aware_vs_ignorant_experiment(n_iter)
                 break
             elif choice == "2":
                 n_iter = int(input(f"{Fore.YELLOW}Number of iterations (default 1000): {Style.RESET_ALL}") or "1000")
-                run_thompson_sampling_analysis(n_iter)
-                break
-            elif choice == "3":
-                n_iter = int(input(f"{Fore.YELLOW}Number of iterations (default 1000): {Style.RESET_ALL}") or "1000")
-                run_neural_network_analysis(n_iter)
-                break
-            elif choice == "4":
-                n_train = int(input(f"{Fore.YELLOW}Number of training steps (default 2000): {Style.RESET_ALL}") or "2000")
-                n_watch = int(input(f"{Fore.YELLOW}Number of watch steps (default 20): {Style.RESET_ALL}") or "20")
-                train_and_watch_experiment(n_train, n_watch)
-                break
-            elif choice == "5":
-                n_iter = int(input(f"{Fore.YELLOW}Number of iterations (default 5000): {Style.RESET_ALL}") or "5000")
-                run_long_training_comparison(n_iter)
+                run_nonlinear_experiment(n_iter)
                 break
             else:
-                print(f"{Fore.RED}Please enter 1, 2, 3, 4, or 5")
+                print(f"{Fore.RED}Please enter 1 or 2")
         except ValueError:
             print(f"{Fore.RED}Please enter a valid number")
         except KeyboardInterrupt:
@@ -657,121 +674,98 @@ def interactive_experiment():
             break
 
 
-def run_neural_network_analysis(n_iterations: int = 1000):
-    """Detailed analysis of Neural Network contextual bandit behavior."""
-    print(f"\n{Fore.CYAN}{'='*70}")
-    print(f"{Fore.CYAN}NEURAL NETWORK CONTEXTUAL BANDIT ANALYSIS")
-    print(f"{Fore.CYAN}{'='*70}")
-    
-    # Create bandit
-    bandit = create_experiment_bandit(n_arms=5, context_dim=5, seed=42)
-    
-    # Run Neural Network policy
-    policy = NeuralNetworkContextualPolicy(n_arms=5, context_dim=5, seed=123)
-    result = run_single_policy_experiment(bandit, policy, n_iterations, "Neural Network")
-    
-    # Analyze neural network behavior
-    print(f"\n{Fore.BLUE}Neural Network Analysis:")
-    info = result['policy_info']
-    
-    print(f"{Fore.MAGENTA}Network Architecture: {info['hidden_dims']}")
-    print(f"{Fore.MAGENTA}Learning Rate: {info['learning_rate']}")
-    print(f"{Fore.MAGENTA}Exploration Rate: {info['exploration_rate']}")
-    print(f"{Fore.MAGENTA}Device: {info['device']}")
-    print(f"{Fore.MAGENTA}Replay Buffer Size: {info['replay_buffer_size']}")
-    print(f"{Fore.MAGENTA}Step Count: {info['step_count']}")
-    print(f"{Fore.MAGENTA}Average Prediction Error: {info['avg_prediction_error']:.3f}")
-    
-    # Plot neural network specific visualizations
-    plot_neural_network_analysis(result, policy)
-    
-    return result
+def run_context_aware_vs_ignorant_experiment(n_iterations: int = 1000, seed: int = 42):
+    """Context-aware vs. context-ignorant policies experiment."""
+    print("\n===== Context-Aware vs. Context-Ignorant Policies =====\n")
+    n_arms = 5
+    context_dim = 5
+    bandit = create_experiment_bandit(n_arms=n_arms, context_dim=context_dim, seed=seed)
+
+    policies = [
+        (LinearThompsonSampling(n_arms, context_dim, seed=seed), "Linear Thompson Sampling"),
+        (EpsilonGreedyLinear(n_arms, context_dim, epsilon=0.1, seed=seed), "Epsilon-Greedy Linear"),
+        (NeuralNetworkContextualPolicy(n_arms, context_dim, seed=seed), "Neural Network Contextual"),
+        (ContextlessEpsilonGreedy(n_arms, context_dim, epsilon=0.1, seed=seed), "Contextless Epsilon-Greedy"),
+    ]
+
+    results = []
+    for policy, name in policies:
+        res = run_single_policy_experiment(bandit, policy, n_iterations=n_iterations, name=name)
+        results.append(res)
+
+    # Compute optimal average reward
+    optimal_rewards = np.array(results[0]['optimal_rewards'])
+    optimal_avg = np.cumsum(optimal_rewards) / (np.arange(len(optimal_rewards)) + 1)
+
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    for res in results:
+        plt.plot(res['regret'], label=res['name'])
+    plt.title("Cumulative Regret")
+    plt.xlabel("Step")
+    plt.ylabel("Regret")
+    plt.legend()
+    plt.subplot(1, 2, 2)
+    for res in results:
+        avg_reward = np.cumsum(res['rewards']) / (np.arange(len(res['rewards'])) + 1)
+        plt.plot(avg_reward, label=res['name'])
+    plt.plot(optimal_avg, label="Optimal Avg Reward", linestyle="--", color="black")
+    plt.title("Average Reward")
+    plt.xlabel("Step")
+    plt.ylabel("Average Reward")
+    plt.legend()
+    plt.suptitle("Context Matters: Context-Aware vs. Context-Ignorant Bandit Algorithms")
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.show()
 
 
-def plot_neural_network_analysis(result: Dict[str, Any], policy: NeuralNetworkContextualPolicy):
-    """Plot Neural Network specific analysis."""
-    plt.figure(figsize=(15, 10))
-    
-    # Plot 1: Learning curve
-    plt.subplot(2, 3, 1)
-    avg_rewards = result['cumulative_rewards'] / (np.arange(len(result['cumulative_rewards'])) + 1)
-    plt.plot(avg_rewards, alpha=0.8, label='Neural Network')
-    plt.xlabel('Time step')
-    plt.ylabel('Average Reward')
-    plt.title('Neural Network Learning Curve')
+def run_nonlinear_experiment(n_iterations: int = 1000, seed: int = 123):
+    """Nonlinear context-reward relationships experiment."""
+    print("\n===== Nonlinear Contextual Bandit Demo =====\n")
+    n_arms = 5
+    context_dim = 5
+    bandit = create_nonlinear_experiment_bandit(n_arms=n_arms, context_dim=context_dim, seed=seed)
+
+    policies = [
+        (LinearThompsonSampling(n_arms, context_dim, seed=seed), "Linear Thompson Sampling"),
+        (EpsilonGreedyLinear(n_arms, context_dim, epsilon=0.1, seed=seed), "Epsilon-Greedy Linear"),
+        (NeuralNetworkContextualPolicy(n_arms, context_dim, seed=seed), "Neural Network Contextual"),
+        (ContextlessEpsilonGreedy(n_arms, context_dim, epsilon=0.1, seed=seed), "Contextless Epsilon-Greedy"),
+        (RandomContextualPolicy(n_arms, context_dim), "Random Policy"),
+    ]
+
+    results = []
+    for policy, name in policies:
+        res = run_single_policy_experiment(bandit, policy, n_iterations=n_iterations, name=name)
+        results.append(res)
+
+    # Compute optimal average reward
+    optimal_rewards = np.array(results[0]['optimal_rewards'])
+    optimal_avg = np.cumsum(optimal_rewards) / (np.arange(len(optimal_rewards)) + 1)
+
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    for res in results:
+        plt.plot(res['regret'], label=res['name'])
+    plt.title("Cumulative Regret (Nonlinear Bandit)")
+    plt.xlabel("Step")
+    plt.ylabel("Regret")
     plt.legend()
-    plt.grid(True, alpha=0.3)
-    
-    # Plot 2: Prediction errors over time
-    plt.subplot(2, 3, 2)
-    if 'prediction_errors' in result['policy_info']:
-        errors = result['policy_info'].get('prediction_errors', [])
-        if errors:
-            plt.plot(errors, alpha=0.8)
-            plt.xlabel('Time step')
-            plt.ylabel('Prediction Error')
-            plt.title('Prediction Errors Over Time')
-            plt.grid(True, alpha=0.3)
-    
-    # Plot 3: Action distribution
-    plt.subplot(2, 3, 3)
-    action_counts = np.bincount(result['actions'], minlength=5)
-    plt.bar(range(5), action_counts, alpha=0.8)
-    plt.xlabel('Arm')
-    plt.ylabel('Number of selections')
-    plt.title('Action Selection Frequency')
-    plt.xticks(range(5), [f'Arm {i}' for i in range(5)])
-    
-    # Plot 4: Expected vs Actual rewards
-    plt.subplot(2, 3, 4)
-    expected_rewards = []
-    for i, context in enumerate(result['contexts'][::10]):  # Sample every 10th context
-        arm_expected = [policy.get_expected_reward(context, arm) for arm in range(5)]
-        expected_rewards.append(arm_expected)
-    
-    expected_rewards = np.array(expected_rewards)
-    actual_rewards = np.array(result['rewards'][::10])
-    
-    plt.scatter(expected_rewards.flatten(), actual_rewards, alpha=0.6)
-    plt.plot([expected_rewards.min(), expected_rewards.max()], 
-             [expected_rewards.min(), expected_rewards.max()], 'r--', alpha=0.8)
-    plt.xlabel('Expected Reward')
-    plt.ylabel('Actual Reward')
-    plt.title('Expected vs Actual Rewards')
-    plt.grid(True, alpha=0.3)
-    
-    # Plot 5: Uncertainty evolution
-    plt.subplot(2, 3, 5)
-    uncertainties = []
-    for i, context in enumerate(result['contexts'][::10]):  # Sample every 10th context
-        arm_uncertainties = [policy.get_uncertainty(context, arm) for arm in range(5)]
-        uncertainties.append(arm_uncertainties)
-    
-    uncertainties = np.array(uncertainties)
-    for arm in range(5):
-        plt.plot(uncertainties[:, arm], label=f'Arm {arm}', alpha=0.8)
-    
-    plt.xlabel('Time step (x10)')
-    plt.ylabel('Uncertainty')
-    plt.title('Uncertainty Evolution')
+    plt.subplot(1, 2, 2)
+    for res in results:
+        avg_reward = np.cumsum(res['rewards']) / (np.arange(len(res['rewards'])) + 1)
+        plt.plot(avg_reward, label=res['name'])
+    plt.plot(optimal_avg, label="Optimal Avg Reward", linestyle="--", color="black")
+    plt.title("Average Reward (Nonlinear Bandit)")
+    plt.xlabel("Step")
+    plt.ylabel("Average Reward")
     plt.legend()
-    plt.grid(True, alpha=0.3)
-    
-    # Plot 6: Replay buffer usage
-    plt.subplot(2, 3, 6)
-    # This would require tracking replay buffer size over time
-    # For now, show final buffer size
-    buffer_size = result['policy_info']['replay_buffer_size']
-    plt.bar(['Replay Buffer'], [buffer_size], alpha=0.8)
-    plt.ylabel('Buffer Size')
-    plt.title('Replay Buffer Usage')
-    
-    plt.tight_layout()
+    plt.suptitle("Nonlinear Contextual Bandit: Neural Network Advantage")
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.show()
 
 
 def main():
-    """Main function with command line argument parsing."""
     parser = argparse.ArgumentParser(description='Contextual Bandit Experiments')
     parser.add_argument('--experiment', '-e', type=str, 
                        choices=['comparison', 'thompson', 'interactive'],
@@ -779,12 +773,9 @@ def main():
                        help='Experiment type: comparison, thompson, interactive')
     parser.add_argument('--iterations', '-i', type=int, default=2000,
                        help='Number of iterations (default: 2000)')
-    
     args = parser.parse_args()
-    
     print("Contextual Bandit Experiments")
     print(f"Number of iterations: {args.iterations}")
-    
     if args.experiment == 'comparison':
         run_policy_comparison_experiment(args.iterations)
     elif args.experiment == 'thompson':

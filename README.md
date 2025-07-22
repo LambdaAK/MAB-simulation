@@ -326,6 +326,31 @@ python play_with_contextual_bandit.py
 └── README.md                   # This file
 ```
 
+## Experiments
+
+1. Epsilon greedy contextual bandits - 10 arms, 5-d context vector, 10 agents with different epsilon, epsilon decay, epsilon minimum values. 1000 iterations. See the effects of the hyperparameters on avg acc. reward and regret over time.
+
+2. Simple model demo - random vs epsilon-greedy vs epsilon-greedy with UCB vs thompson sampling vs softmax
+
+3. Context-Aware vs. Context-Ignorant Bandit Algorithms
+
+This experiment demonstrates the importance of using context in multi-armed bandit problems. We compare several algorithms on a 5-armed contextual bandit with 5-dimensional context vectors, where each arm's expected reward is a different linear function of the context.
+
+**Algorithms compared:**
+- **Linear Thompson Sampling** (context-aware, Bayesian)
+- **Epsilon-Greedy Linear** (context-aware, linear model)
+- **Neural Network Contextual** (context-aware, nonlinear model)
+- **Contextless Epsilon-Greedy** (ignores context, classic bandit)
+
+**Results:**
+- The left plot shows **cumulative regret**: how much reward each algorithm missed out on compared to the optimal policy.
+- The right plot shows **average reward** over time, with a dashed line for the optimal average reward.
+
+![Context-Aware vs. Context-Ignorant Bandit Algorithms](experiment/exp1.png)
+
+**Key takeaway:**  
+Context-aware algorithms (especially Linear Thompson Sampling and Neural Network Contextual) achieve much lower regret and higher average reward than context-ignorant algorithms. The Contextless Epsilon-Greedy policy, which ignores context, performs significantly worse, highlighting the value of leveraging contextual information in decision-making.
+
 ## References
 
 - Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction
