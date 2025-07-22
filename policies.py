@@ -187,10 +187,10 @@ class UCBPolicy(Policy):
     """
     Upper Confidence Bound (UCB1) policy.
     Selects the arm with the highest upper confidence bound on the estimated reward.
+    Uses the standard theoretical value c = 2.0 for the exploration bonus.
     """
-    def __init__(self, n_arms: int, c: float = 2.0, seed: Optional[int] = None):
+    def __init__(self, n_arms: int, seed: Optional[int] = None):
         super().__init__(n_arms)
-        self.c = c
         if seed is not None:
             np.random.seed(seed)
 
@@ -200,14 +200,14 @@ class UCBPolicy(Policy):
             if self.action_counts[i] == 0:
                 return i
         total_counts = np.sum(self.action_counts)
-        ucb_values = self.action_values + self.c * np.sqrt(np.log(total_counts) / self.action_counts)
+        ucb_values = self.action_values + 2.0 * np.sqrt(np.log(total_counts) / self.action_counts)
         # Break ties randomly
         best_actions = np.where(ucb_values == np.max(ucb_values))[0]
         return np.random.choice(best_actions)
 
     def get_info(self) -> Dict[str, Any]:
         info = super().get_info()
-        info['c'] = self.c
+        info['c'] = 2.0  # Fixed theoretical value
         return info
 
 
