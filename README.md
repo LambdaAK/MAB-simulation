@@ -122,22 +122,22 @@ $$r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon$$
 where $\epsilon \sim \mathcal{N}(0, \sigma^2)$.
 
 **Prior Distribution**: Normal conjugate prior:
-$$\mathbf{w}_i, b_i \sim \mathcal{N}(\boldsymbol{\mu}_0, \sigma^2\boldsymbol{\Sigma}_0)$$
+$$\mathbf{w}_i, b_i \sim \mathcal{N}(\mu_0, \sigma^2\Sigma_0)$$
 
 **Posterior Update**: After observing $(\mathbf{x}_t, r_t)$, the posterior is updated using Bayesian linear regression:
 
-$$\boldsymbol{\Sigma}_{\text{new}} = \left(\boldsymbol{\Sigma}_{\text{old}}^{-1} + \frac{1}{\sigma^2} \mathbf{x}_{\text{aug}} \mathbf{x}_{\text{aug}}^T\right)^{-1}$$
+$$\Sigma_{\text{new}} = \left(\Sigma_{\text{old}}^{-1} + \frac{1}{\sigma^2} \mathbf{x}_{\text{aug}} \mathbf{x}_{\text{aug}}^T\right)^{-1}$$
 
-$$\boldsymbol{\mu}_{\text{new}} = \boldsymbol{\Sigma}_{\text{new}} \left(\boldsymbol{\Sigma}_{\text{old}}^{-1} \boldsymbol{\mu}_{\text{old}} + \frac{1}{\sigma^2} r_t \mathbf{x}_{\text{aug}}\right)$$
+$$\mu_{\text{new}} = \Sigma_{\text{new}} \left(\Sigma_{\text{old}}^{-1} \mu_{\text{old}} + \frac{1}{\sigma^2} r_t \mathbf{x}_{\text{aug}}\right)$$
 
 where $\mathbf{x}_{\text{aug}} = [1, \mathbf{x}^T]^T$ includes the bias term.
 
 **Action Selection**: Sample parameters and select best arm:
-$$\boldsymbol{\theta}_i \sim \mathcal{N}(\boldsymbol{\mu}_i, \boldsymbol{\Sigma}_i)$$
-$$a_t = \arg\max_{i} \boldsymbol{\theta}_i^T \mathbf{x}_{\text{aug}, t}$$
+$$\theta_i \sim \mathcal{N}(\mu_i, \Sigma_i)$$
+$$a_t = \arg\max_{i} \theta_i^T \mathbf{x}_{\text{aug}, t}$$
 
 **Uncertainty Quantification**: The uncertainty for arm $i$ given context $\mathbf{x}$ is:
-$$\text{uncertainty}_i(\mathbf{x}) = \sqrt{\mathbf{x}_{\text{aug}}^T \boldsymbol{\Sigma}_i \mathbf{x}_{\text{aug}}}$$
+$$\text{uncertainty}_i(\mathbf{x}) = \sqrt{\mathbf{x}_{\text{aug}}^T \Sigma_i \mathbf{x}_{\text{aug}}}$$
 
 **Pros**: Handles context, theoretical guarantees, uncertainty quantification
 **Cons**: Assumes linear relationship, may not capture complex patterns
