@@ -1,213 +1,222 @@
-# Multi-Armed Bandit Reinforcement Learning Project
+# Multi-Armed Bandit and Contextual Bandit Implementation
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Theory: The Multi-Armed Bandit Problem](#theory-the-multi-armed-bandit-problem)
-  - [Mathematical Formulation](#mathematical-formulation)
-  - [Algorithmic Approaches](#algorithmic-approaches)
-    - [Random Policy](#random-policy)
-    - [Epsilon-Greedy Policy](#epsilon-greedy-policy)
-    - [Epsilon-Greedy with Decay](#epsilon-greedy-with-decay)
-    - [Softmax (Boltzmann) Policy](#softmax-boltzmann-policy)
-    - [Upper Confidence Bound (UCB) Policy](#upper-confidence-bound-ucb-policy)
-    - [Thompson Sampling](#thompson-sampling)
-- [Code Structure and Usage](#code-structure-and-usage)
-  - [Project Structure](#project-structure)
-  - [How to Run Experiments](#how-to-run-experiments)
-  - [Adding New Algorithms or Experiments](#adding-new-algorithms-or-experiments)
-- [References](#references)
+This project implements various Multi-Armed Bandit (MAB) and Contextual Multi-Armed Bandit (CMAB) algorithms for reinforcement learning.
 
----
+## Features
 
-## Introduction
+### Multi-Armed Bandit (MAB)
+- **Random Policy**: Baseline random selection
+- **Epsilon-Greedy Policy**: Probabilistic exploration/exploitation
+- **Epsilon-Greedy with Decay**: Adaptive exploration rate
+- **Upper Confidence Bound (UCB) Policy**: Balances estimated reward with uncertainty
+- **Softmax (Boltzmann Exploration) Policy**: Probabilistic selection based on estimated values
+- **Thompson Sampling (Beta)**: Bayesian approach using Beta distributions for Bernoulli-like rewards
+- **Thompson Sampling (Normal)**: Bayesian approach using Normal-Inverse-Gamma conjugate priors for continuous rewards
 
-This project implements and compares algorithms for the Multi-Armed Bandit (MAB) problem, a foundational scenario in reinforcement learning and online decision-making. The codebase is modular, extensible, and includes interactive demos, experiment classes, and plotting utilities.
+### Contextual Multi-Armed Bandit (CMAB)
+- **Random Policy**: Baseline random selection
+- **Epsilon-Greedy Linear**: Linear models with epsilon-greedy exploration
+- **Linear Thompson Sampling**: Bayesian linear regression with Thompson Sampling
+- **Neural Network Contextual Bandit**: Deep learning approach with experience replay
 
----
+## Installation
 
-## Theory: The Multi-Armed Bandit Problem
+```bash
+pip install -r requirements.txt
+```
 
-### What is the Multi-Armed Bandit Problem?
+## Usage
 
-The Multi-Armed Bandit (MAB) problem models a scenario where an agent must choose between multiple options ("arms"), each with an unknown reward distribution. The agent's goal is to maximize cumulative reward over time by balancing:
-- **Exploration:** Trying different arms to learn their rewards.
-- **Exploitation:** Choosing the arm believed to yield the highest reward.
+### Multi-Armed Bandit Experiments
 
-This models real-world problems like online advertising, clinical trials, and recommendation systems.
+```bash
+python play_with_bandit.py
+```
 
-### Mathematical Formulation
+### Contextual Bandit Experiments
 
-- Let there be $K$ arms, indexed by $i = 1, 2, ..., K$.
-- Each arm $i$ provides a reward $r_t$ at time $t$, drawn from an unknown distribution with mean $\mu_i$.
-- The agent selects an arm $a_t$ at each time step $t$, observes the reward, and updates its strategy.
+```bash
+python run_contextual_experiments.py
+```
 
-**Objective:**
+Or with specific experiment types:
 
-$$
-\max_{a_1, ..., a_T} \mathbb{E}\left[ \sum_{t=1}^T r_t \right]
-$$
+```bash
+python run_contextual_experiments.py --experiment comparison --iterations 2000
+python run_contextual_experiments.py --experiment thompson --iterations 1000
+```
 
-**Regret:**
+### Interactive Contextual Bandit
 
-$$
-\text{Regret}(T) = T \mu^* - \mathbb{E}\left[ \sum_{t=1}^T r_t \right], \quad \mu^* = \max_i \mu_i
-$$
+```bash
+python play_with_contextual_bandit.py
+```
 
----
+## Algorithm Details
 
-### Algorithmic Approaches
+### Multi-Armed Bandit Algorithms
 
 #### Random Policy
-- **Description:** Select an arm uniformly at random at each step.
-- **Math:**
-
-$$
-P(a_t = i) = \frac{1}{K} \quad \forall i
-$$
-
-- **Pros:** Simple, ensures exploration.
-- **Cons:** Ignores past information, high regret.
+- **Description**: Selects arms randomly with equal probability
+- **Pros**: Simple, unbiased exploration
+- **Cons**: No learning, poor performance
+- **Use Case**: Baseline comparison
 
 #### Epsilon-Greedy Policy
-- **Description:** With probability $\epsilon$, select a random arm (exploration); with probability $1-\epsilon$, select the arm with the highest estimated mean reward (exploitation).
-- **Math:**
-
-$$
-Q_t(i) = \frac{1}{N_t(i)} \sum_{s=1}^{t} r_s \cdot \mathbb{I}[a_s = i]
-$$
-
-$$
-a_t = \begin{cases}
-\text{random arm} & \text{with probability } \epsilon \\
-\arg\max_i Q_t(i) & \text{with probability } 1 - \epsilon
-\end{cases}
-$$
-
-- **Pros:** Balances exploration and exploitation, simple.
-- **Cons:** Fixed $\epsilon$ may not be optimal, does not account for uncertainty.
-
-#### Epsilon-Greedy with Decay
-- **Description:** Same as Epsilon-Greedy, but $\epsilon$ decreases over time.
-- **Math:**
-
-$$
-\epsilon_t = \max(\epsilon_{\text{min}}, \epsilon_0 \cdot \text{decay}^t)
-$$
-
-- **Pros:** Adapts exploration rate, often achieves lower regret.
-- **Cons:** Requires tuning decay schedule.
-
-#### Softmax (Boltzmann) Policy
-- **Description:** Selects arms with probability proportional to $\exp(Q_i / \tau)$, where $Q_i$ is the estimated value and $\tau$ is the temperature parameter.
-- **Math:**
-
-$$
-P(a = i) = \frac{\exp(Q_i / \tau)}{\sum_{j=1}^K \exp(Q_j / \tau)}
-$$
-
-- **Pros:** Smoothly interpolates between exploration and exploitation; all arms are always explored, but better arms are favored.
-- **Cons:** Requires tuning of $\tau$; can be sensitive to the scale of $Q_i$.
-- **Usage Example (Pseudocode):**
-  ```python
-  import numpy as np
-  def softmax_policy(Q, tau):
-      exp_Q = np.exp(Q / tau)
-      probs = exp_Q / np.sum(exp_Q)
-      return np.random.choice(len(Q), p=probs)
-  ```
+- **Description**: With probability ε, selects random arm; otherwise selects best estimated arm
+- **Mathematical Formulation**: 
+  - Action selection: `a_t = argmax_i Q_i` with probability 1-ε, random with probability ε
+  - Value update: `Q_i = Q_i + α(r_t - Q_i)` where α is learning rate
+- **Pros**: Simple, effective exploration/exploitation balance
+- **Cons**: Fixed exploration rate, may not be optimal
+- **Use Case**: Good baseline for simple problems
 
 #### Upper Confidence Bound (UCB) Policy
-- **Description:** Selects the arm with the highest upper confidence bound on the estimated reward.
-- **Math:**
-
-$$
-a_t = \arg\max_i \left( Q_t(i) + 2.0 \sqrt{\frac{\ln t}{N_t(i)}} \right)
-$$
-
-where $Q_t(i)$ is the estimated mean reward for arm $i$ at time $t$, and $N_t(i)$ is the number of times arm $i$ has been pulled.
-
-- **Pros:** Theoretically optimal regret bounds, automatically balances exploration and exploitation.
-- **Cons:** Requires knowledge of the total number of pulls, can be conservative in practice.
+- **Description**: Balances estimated reward with uncertainty using confidence bounds
+- **Mathematical Formulation**: 
+  - UCB value: `UCB_i = Q_i + c * sqrt(ln(t) / N_i)`
+  - Action selection: `a_t = argmax_i UCB_i`
+  - Where c=2.0 (theoretical constant), t is time step, N_i is number of pulls for arm i
+- **Pros**: No parameters to tune, theoretical guarantees
+- **Cons**: Assumes bounded rewards, may be conservative
+- **Use Case**: When theoretical guarantees are important
 
 #### Thompson Sampling
-- **Description:** Bayesian approach that samples from posterior distributions to select arms. Maintains uncertainty about arm rewards and naturally balances exploration and exploitation.
+- **Description**: Bayesian approach that samples from posterior distributions
+- **Mathematical Formulation**:
+  - For Beta posterior: `θ_i ~ Beta(α_i, β_i)`
+  - Action selection: `a_t = argmax_i θ_i`
+  - Update: `α_i += r_t`, `β_i += (1 - r_t)` for binary rewards
+- **Pros**: Natural exploration/exploitation balance, good empirical performance
+- **Cons**: Computationally more expensive, requires conjugate priors
+- **Use Case**: When good empirical performance is desired
 
-**Thompson Sampling with Beta Prior (for Bernoulli rewards):**
-- **Math:**
+### Contextual Multi-Armed Bandit Algorithms
 
-$$
-\theta_i \sim \text{Beta}(\alpha_i, \beta_i)
-$$
+#### Linear Thompson Sampling
+- **Description**: Models reward as linear function of context with Bayesian uncertainty
+- **Mathematical Formulation**:
+  - Reward model: `r = bias + context @ weights + noise`
+  - Posterior update: Normal-Inverse-Gamma conjugate prior
+  - Action selection: Sample from posterior, select argmax
+- **Pros**: Handles context, theoretical guarantees, uncertainty quantification
+- **Cons**: Assumes linear relationship, may not capture complex patterns
+- **Use Case**: When context-reward relationship is approximately linear
 
-$$
-a_t = \arg\max_i \theta_i
-$$
+#### Neural Network Contextual Bandit
+- **Description**: Deep learning approach using neural networks with experience replay
+- **Architecture**:
+  - Input: Context vector
+  - Hidden layers: Configurable (default: [64, 32] with ReLU and Dropout)
+  - Output: Q-values for each arm
+- **Key Features**:
+  - **Experience Replay**: Stores (context, action, reward) tuples in buffer
+  - **Batch Learning**: Updates network using mini-batches from replay buffer
+  - **Target Network**: Stable learning with periodic target network updates
+  - **Exploration**: Epsilon-greedy exploration strategy
+  - **Uncertainty Estimation**: Bayesian posterior over linear parameters for uncertainty
+- **Mathematical Formulation**:
+  - Q-function: `Q(context, arm) = f_θ(context)[arm]` where f_θ is neural network
+  - Loss: `L = MSE(Q(context, action), reward)`
+  - Update: `θ = θ - α * ∇_θ L` using Adam optimizer
+- **Pros**: Can learn complex non-linear patterns, handles high-dimensional contexts
+- **Cons**: More hyperparameters, requires more data, computationally expensive
+- **Use Case**: When context-reward relationship is complex or non-linear
 
-where $\alpha_i = 1 + \text{successes}_i$ and $\beta_i = 1 + \text{failures}_i$.
+## Environment Types
 
-**Thompson Sampling with Normal-Inverse-Gamma Prior (for continuous rewards):**
-- **Math:**
+### Multi-Armed Bandit Environment
+- **Arms**: Each arm has a fixed reward distribution
+- **Rewards**: Sampled from arm's distribution when pulled
+- **Goal**: Maximize cumulative reward over time
 
-$$
-\mu_i, \sigma_i^2 \sim \text{Normal-Inverse-Gamma}(\mu_0, \lambda_0, \alpha_0, \beta_0)
-$$
+### Contextual Multi-Armed Bandit Environment
+- **Arms**: Each arm has a parameterized reward distribution
+- **Context**: Vector that parameterizes arm rewards
+- **Rewards**: `r = f_arm(context) + noise` where f_arm is arm-specific function
+- **Goal**: Learn context-reward mapping and maximize cumulative reward
 
-$$
-a_t = \arg\max_i \mu_i
-$$
+#### Parameterized Distributions
+- **LinearNormalDistribution**: `r ~ N(context @ weights + bias, std)`
+- **LinearBernoulliDistribution**: `P(r=1) = sigmoid(context @ weights + bias)`
+- **CustomDistribution**: Arbitrary function mapping context to distribution
 
-- **Pros:** Excellent empirical performance, naturally handles uncertainty, often outperforms UCB in practice.
-- **Cons:** Requires prior assumptions, can be computationally more expensive than simpler methods.
+## Experiment Framework
 
----
+### Multi-Armed Bandit Experiments
+- Policy comparison with regret analysis
+- Individual policy analysis
+- Interactive play mode
 
-## Code Structure and Usage
+### Contextual Bandit Experiments
+- Policy comparison (Random, Epsilon-Greedy, Linear TS, Neural Network)
+- Thompson Sampling detailed analysis
+- Neural Network specific analysis
+- Train and watch mode for interactive decision observation
 
-### Project Structure
+## Visualization
 
-- `mab_environment.py`: Core MAB environment and Arm classes.
-- `policies.py`: Policy (algorithm) classes, including EpsilonGreedy, RandomPolicy, etc.
-- `experiment.py`: Modular Experiment class for running and comparing policies.
-- `play_with_bandit.py`: Main script for interactive play, demos, and running experiments.
-- `requirements.txt`: Python dependencies.
-- `README.md`: This documentation.
-- `components.md`: Project planning notes.
+The framework provides comprehensive visualizations:
+- Cumulative and average rewards over time
+- Regret analysis
+- Action distribution analysis
+- Context visualization
+- Policy-specific metrics (prediction errors, uncertainty, etc.)
+- Neural network specific plots (learning curves, replay buffer usage)
 
-### How to Run Experiments
+## Example Usage
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. **Run the main script:**
-   ```bash
-   python play_with_bandit.py
-   ```
-   - Choose from interactive play, policy demos, or sample experiments.
-   - Use `--mode` to run a specific experiment directly.
+### Running a Policy Comparison
+```python
+from run_contextual_experiments import run_policy_comparison_experiment
+results = run_policy_comparison_experiment(n_iterations=2000)
+```
 
-3. **Sample Multi-Policy Experiment:**
-   - Compares Random and several EpsilonGreedy configurations on a 10-armed bandit.
-   - Plots average accumulated reward for each policy.
+### Training and Watching a Model
+```python
+from run_contextual_experiments import train_and_watch_experiment
+train_and_watch_experiment(n_train=2000, n_watch=20)
+```
 
-### Adding New Algorithms or Experiments
+### Creating Custom Environments
+```python
+from contextual_mab_environment import ContextualMultiArmedBandit, LinearNormalDistribution
 
-- **To add a new policy:**
-  - Implement a new class in `policies.py` inheriting from `Policy`.
-  - Add it to the `policies` list in your experiment setup.
-- **To add a new experiment:**
-  - Create a new function in `play_with_bandit.py` using the `Experiment` class.
-  - Specify arms, policies, and parameters as needed.
+# Create custom bandit
+arms = []
+for i in range(5):
+    weights = np.random.normal(0, 1, 5)
+    distribution = LinearNormalDistribution(context_dim=5, weights=weights, std=0.5)
+    arms.append(ContextualArm(f"Arm_{i}", distribution))
 
----
+bandit = ContextualMultiArmedBandit(arms, seed=42)
+```
 
-## References
+## Requirements
 
-- Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction. (Ch. 2)
-- Lattimore, T., & Szepesvári, C. (2020). Bandit Algorithms. Cambridge University Press.
-- Auer, P., Cesa-Bianchi, N., & Fischer, P. (2002). Finite-time Analysis of the Multiarmed Bandit Problem. Machine Learning, 47(2-3), 235–256.
+- Python 3.7+
+- NumPy
+- Matplotlib
+- Colorama
+- SciPy
+- PyTorch (for Neural Network Contextual Bandit)
 
----
+## Project Structure
 
-*This README is self-contained and provides both the theoretical background and practical instructions for using and extending the Multi-Armed Bandit project.* 
+```
+├── bandit.py                    # Multi-armed bandit environment
+├── policies.py                  # MAB policies
+├── experiment.py                # MAB experiment framework
+├── play_with_bandit.py         # MAB interactive script
+├── contextual_mab_environment.py # CMAB environment
+├── contextual_policies.py       # CMAB policies
+├── run_contextual_experiments.py # CMAB experiment framework
+├── play_with_contextual_bandit.py # CMAB interactive script
+├── requirements.txt             # Dependencies
+└── README.md                   # This file
+```
+
+## Contributing
+
+Feel free to add new policies, environments, or experiment types. The modular design makes it easy to extend the framework.
 
