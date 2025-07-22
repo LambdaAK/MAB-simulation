@@ -240,6 +240,128 @@ class SoftmaxPolicy(Policy):
         return info
 
 
+class ThompsonSamplingPolicy(Policy):
+    """
+    Thompson Sampling policy using Beta distributions.
+    Assumes rewards are in [0,1] (can be Bernoulli or normalized continuous rewards).
+    For each arm, maintains Beta(α, β) posterior where:
+    - α = 1 + number of successes (rewards = 1)
+    - β = 1 + number of failures (rewards = 0)
+    """
+    def __init__(self, n_arms: int, seed: Optional[int] = None):
+        super().__init__(n_arms)
+        # Initialize Beta(1,1) priors (uniform distribution)
+        self.alpha = np.ones(n_arms)  # α = 1 + successes
+        self.beta = np.ones(n_arms)   # β = 1 + failures
+        if seed is not None:
+            np.random.seed(seed)
+
+    def select_action(self) -> int:
+        # Sample from Beta distributions for each arm
+        samples = np.random.beta(self.alpha, self.beta)
+        # Select arm with highest sampled value
+        best_actions = np.where(samples == np.max(samples))[0]
+        return np.random.choice(best_actions)
+
+    def update(self, action: int, reward: float):
+        super().update(action, reward)
+        # Update Beta parameters
+        # For Bernoulli rewards: reward should be 0 or 1
+        # For continuous rewards in [0,1]: treat as success/failure based on threshold
+        if reward > 0.5:  # Success
+            self.alpha[action] += 1
+        else:  # Failure
+            self.beta[action] += 1
+
+    def reset(self):
+        super().reset()
+        self.alpha = np.ones(self.n_arms)
+        self.beta = np.ones(self.n_arms)
+
+    def get_info(self) -> Dict[str, Any]:
+        info = super().get_info()
+        info['alpha'] = self.alpha.copy()
+        info['beta'] = self.beta.copy()
+        info['posterior_means'] = self.alpha / (self.alpha + self.beta)
+        return info
+
+
+class ThompsonSamplingNormalPolicy(Policy):
+    """
+    Thompson Sampling policy using Normal distributions.
+    Assumes rewards follow Normal(μ, σ²) distributions.
+    Uses Normal-Inverse-Gamma conjugate prior.
+    """
+    def __init__(self, n_arms: int, seed: Optional[int] = None):
+        super().__init__(n_arms)
+        # Initialize Normal-Inverse-Gamma priors
+        # μ₀ = 0, λ₀ = 1, α₀ = 1, β₀ = 1
+        self.mu_0 = np.zeros(n_arms)      # Prior mean
+        self.lambda_0 = np.ones(n_arms)   # Prior precision multiplier
+        self.alpha_0 = np.ones(n_arms)    # Prior shape
+        self.beta_0 = np.ones(n_arms)     # Prior scale
+        
+        # Posterior parameters
+        self.mu_n = np.zeros(n_arms)      # Posterior mean
+        self.lambda_n = np.ones(n_arms)   # Posterior precision multiplier
+        self.alpha_n = np.ones(n_arms)    # Posterior shape
+        self.beta_n = np.ones(n_arms)     # Posterior scale
+        
+        if seed is not None:
+            np.random.seed(seed)
+
+    def select_action(self) -> int:
+        # Sample from Student's t-distribution for each arm
+        # This is the posterior predictive distribution
+        samples = np.random.standard_t(2 * self.alpha_n)
+        # Scale and shift to get samples from the posterior predictive
+        samples = self.mu_n + samples * np.sqrt(self.beta_n * (self.lambda_n + 1) / (self.alpha_n * self.lambda_n))
+        
+        # Select arm with highest sampled value
+        best_actions = np.where(samples == np.max(samples))[0]
+        return np.random.choice(best_actions)
+
+    def update(self, action: int, reward: float):
+        super().update(action, reward)
+        
+        # Update posterior parameters for the selected arm
+        n = self.action_counts[action]
+        
+        # Update lambda (precision multiplier)
+        self.lambda_n[action] = self.lambda_0[action] + n
+        
+        # Update mu (mean)
+        if n == 1:
+            self.mu_n[action] = reward
+        else:
+            # Incremental update of mean
+            self.mu_n[action] = (self.mu_n[action] * (n-1) + reward) / n
+        
+        # Update alpha and beta
+        self.alpha_n[action] = self.alpha_0[action] + n/2
+        
+        # Update beta (scale parameter)
+        if n == 1:
+            self.beta_n[action] = self.beta_0[action] + 0.5 * (reward - self.mu_0[action])**2
+        else:
+            # Incremental update of sum of squared differences
+            old_mean = (self.mu_n[action] * n - reward) / (n-1)
+            self.beta_n[action] = self.beta_0[action] + 0.5 * (n-1) * (self.mu_n[action] - old_mean)**2 + 0.5 * (reward - self.mu_n[action])**2
+
+    def reset(self):
+        super().reset()
+        self.mu_n = np.zeros(self.n_arms)
+        self.lambda_n = np.ones(self.n_arms)
+        self.alpha_n = np.ones(self.n_arms)
+        self.beta_n = np.ones(self.n_arms)
+
+    def get_info(self) -> Dict[str, Any]:
+        info = super().get_info()
+        info['posterior_means'] = self.mu_n.copy()
+        info['posterior_variances'] = self.beta_n / (self.alpha_n - 0.5)  # Variance of posterior
+        return info
+
+
 # Example usage and testing
 if __name__ == "__main__":
     from mab_environment import MultiArmedBandit, Arm
