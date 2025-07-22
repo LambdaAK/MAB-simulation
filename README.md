@@ -345,6 +345,22 @@ This experiment demonstrates the importance of using context in multi-armed band
 **Key takeaway:**  
 Context-aware algorithms (especially Linear Thompson Sampling and Neural Network Contextual) achieve much lower regret and higher average reward than context-ignorant algorithms. The Contextless Epsilon-Greedy policy, which ignores context, performs significantly worse, highlighting the value of leveraging contextual information in decision-making.
 
+## Experiment 2: Epsilon-Greedy Linear Hyperparameter Comparison
+
+This experiment investigates how the choice of the epsilon parameter in the Epsilon-Greedy Linear policy affects performance in a contextual bandit setting. We compare several values of epsilon (ε = 0.01, 0.05, 0.1, 0.2, 0.5) on a 5-armed contextual bandit with 5-dimensional context vectors.
+
+**What is being compared:**
+- **Epsilon-Greedy Linear** with different values of ε (exploration rate).
+
+**Results:**
+- The left plot shows **cumulative regret** for each epsilon value. Lower regret indicates better performance.
+- The right plot shows **average reward** over time. The dashed line represents the optimal average reward.
+
+![Epsilon-Greedy Linear Hyperparameter Comparison](https://github.com/LambdaAK/MAB-simulation/blob/main/Experiment%20pictures/exp2.png)
+
+**Key takeaway:**  
+Smaller values of epsilon (less random exploration) generally lead to lower regret and higher average reward in this linear contextual bandit setting. However, too little exploration (very small epsilon) can risk missing out on learning about better arms early on, while too much exploration (large epsilon) leads to consistently worse performance.
+
 ## References
 
 - Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction
