@@ -132,8 +132,12 @@ $$\mu_{\text{new}} = \Sigma_{\text{new}} \left(\Sigma_{\text{old}}^{-1} \mu_{\te
 
 where $\mathbf{x}_{\text{aug}} = [1, \mathbf{x}^T]^T$ includes the bias term.
 
-**Action Selection**: Sample parameters and select best arm:
+**Action Selection**:Sample parameters and select best arm:
+
+
 $$\theta_i \sim \mathcal{N}(\mu_i, \Sigma_i)$$
+
+
 $$a_t = \arg\max_{i} \theta_i^T \mathbf{x}_{\text{aug}, t}$$
 
 **Uncertainty Quantification**: The uncertainty for arm $i$ given context $\mathbf{x}$ is:
