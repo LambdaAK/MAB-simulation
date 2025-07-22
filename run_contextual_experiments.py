@@ -646,31 +646,72 @@ def plot_long_term_comparison(results: List[Dict[str, Any]], n_iterations: int):
     plt.show()
 
 
+def run_epsilon_greedy_hyperparam_experiment(n_iterations: int = 1000, seed: int = 42):
+    """Compare different epsilon values for Epsilon-Greedy Linear."""
+    print("\n===== Epsilon-Greedy Linear Hyperparameter Comparison =====\n")
+    n_arms = 5
+    context_dim = 5
+    bandit = create_experiment_bandit(n_arms=n_arms, context_dim=context_dim, seed=seed)
+    epsilons = [0.01, 0.05, 0.1, 0.2, 0.5]
+    policies = [
+        (EpsilonGreedyLinear(n_arms, context_dim, epsilon=eps, seed=seed), f"Epsilon-Greedy (ε={eps})")
+        for eps in epsilons
+    ]
+    results = []
+    for policy, name in policies:
+        res = run_single_policy_experiment(bandit, policy, n_iterations=n_iterations, name=name)
+        results.append(res)
+    # Compute optimal average reward
+    optimal_rewards = np.array(results[0]['optimal_rewards'])
+    optimal_avg = np.cumsum(optimal_rewards) / (np.arange(len(optimal_rewards)) + 1)
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    for res in results:
+        plt.plot(res['regret'], label=res['name'])
+    plt.title("Cumulative Regret (Epsilon-Greedy Linear)")
+    plt.xlabel("Step")
+    plt.ylabel("Regret")
+    plt.legend()
+    plt.subplot(1, 2, 2)
+    for res in results:
+        avg_reward = np.cumsum(res['rewards']) / (np.arange(len(res['rewards'])) + 1)
+        plt.plot(avg_reward, label=res['name'])
+    plt.plot(optimal_avg, label="Optimal Avg Reward", linestyle="--", color="black")
+    plt.title("Average Reward (Epsilon-Greedy Linear)")
+    plt.xlabel("Step")
+    plt.ylabel("Average Reward")
+    plt.legend()
+    plt.suptitle("Epsilon-Greedy Linear: Hyperparameter Comparison")
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.show()
+
+
 def interactive_experiment():
-    """Interactive experiment mode."""
-    print(f"{Fore.GREEN}Interactive Contextual Bandit Experiment")
-    print(f"{Fore.GREEN}Choose an experiment type:")
+    print("Contextual Bandit Demo Menu:")
     print("1. Context-aware vs. context-ignorant policies")
     print("2. Nonlinear context bandit demo (neural network advantage)")
-    
+    print("3. Epsilon-Greedy Linear: Hyperparameter Comparison")
     while True:
         try:
-            choice = input(f"\n{Fore.BLUE}Enter choice (1-2): {Style.RESET_ALL}").strip()
-            
+            choice = input("Enter choice (1-3): ").strip()
             if choice == "1":
-                n_iter = int(input(f"{Fore.YELLOW}Number of iterations (default 1000): {Style.RESET_ALL}") or "1000")
+                n_iter = int(input("Number of iterations (default 1000): ") or "1000")
                 run_context_aware_vs_ignorant_experiment(n_iter)
                 break
             elif choice == "2":
-                n_iter = int(input(f"{Fore.YELLOW}Number of iterations (default 1000): {Style.RESET_ALL}") or "1000")
+                n_iter = int(input("Number of iterations (default 1000): ") or "1000")
                 run_nonlinear_experiment(n_iter)
                 break
+            elif choice == "3":
+                n_iter = int(input("Number of iterations (default 1000): ") or "1000")
+                run_epsilon_greedy_hyperparam_experiment(n_iter)
+                break
             else:
-                print(f"{Fore.RED}Please enter 1 or 2")
+                print("Please enter 1, 2, or 3")
         except ValueError:
-            print(f"{Fore.RED}Please enter a valid number")
+            print("Please enter a valid number")
         except KeyboardInterrupt:
-            print(f"\n{Fore.YELLOW}Goodbye!")
+            print("Goodbye!")
             break
 
 
