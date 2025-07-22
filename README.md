@@ -6,30 +6,36 @@ This project implements various Multi-Armed Bandit (MAB) and Contextual Multi-Ar
 
 ### What is Multi-Armed Bandit?
 
-A **Multi-Armed Bandit (MAB)** is a sequential decision-making problem where an agent must choose between $K$ actions (arms) at each time step to maximize cumulative reward over time. The agent faces the fundamental trade-off between **exploration** (trying different arms to learn their rewards) and **exploitation** (choosing the arm believed to yield the highest reward).
+A **Multi-Armed Bandit (MAB)** is a sequential decision-making problem where an agent must choose between K actions (arms) at each time step to maximize cumulative reward over time. The agent faces the fundamental trade-off between **exploration** (trying different arms to learn their rewards) and **exploitation** (choosing the arm believed to yield the highest reward).
 
 #### Mathematical Formulation
 
 **Problem Setup:**
-- **Arms**: $K$ arms indexed by $i \in \{1, 2, \ldots, K\}$
-- **Time Horizon**: $T$ time steps
-- **Reward Distribution**: Each arm $i$ has an unknown reward distribution with mean $\mu_i$
-- **Action**: At time $t$, the agent selects arm $a_t \in \{1, 2, \ldots, K\}$
-- **Reward**: The agent receives reward $r_t \sim D_{a_t}$ where $D_{a_t}$ is the reward distribution of the selected arm
+- **Arms**: K arms indexed by i ∈ {1, 2, ..., K}
+- **Time Horizon**: T time steps
+- **Reward Distribution**: Each arm i has an unknown reward distribution with mean μᵢ
+- **Action**: At time t, the agent selects arm aₜ ∈ {1, 2, ..., K}
+- **Reward**: The agent receives reward rₜ ~ D_{aₜ} where D_{aₜ} is the reward distribution of the selected arm
 
 **Objective:**
 The goal is to maximize the expected cumulative reward:
 
-$$\max_{\pi} \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```
+max E[Σ(t=1 to T) rₜ]
+ π
+```
 
-where $\pi$ is the policy that maps history to actions.
+where π is the policy that maps history to actions.
 
 **Regret:**
 The performance is measured in terms of regret, which is the difference between the optimal cumulative reward and the actual cumulative reward:
 
-$$R(T) = T \mu^* - \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```
+R(T) = T μ* - E[Σ(t=1 to T) rₜ]
+```
 
-where $\mu^* = \max_{i} \mu_i$ is the expected reward of the optimal arm.
+where μ* = max μᵢ is the expected reward of the optimal arm.
+           i
 
 **Exploration vs Exploitation Trade-off:**
 The agent must balance:
@@ -43,24 +49,30 @@ A **Contextual Multi-Armed Bandit (CMAB)** extends the traditional MAB problem b
 #### Mathematical Formulation
 
 **Problem Setup:**
-- **Context Space**: $\mathcal{X} \subseteq \mathbb{R}^d$ (d-dimensional context space)
-- **Context**: At time $t$, context $x_t \in \mathcal{X}$ is revealed
-- **Arms**: $K$ arms indexed by $i \in \{1, 2, \ldots, K\}$
-- **Reward Function**: Each arm $i$ has a reward function $f_i: \mathcal{X} \rightarrow \mathbb{R}$
-- **Action**: At time $t$, the agent selects arm $a_t \in \{1, 2, \ldots, K\}$ based on context $x_t$
-- **Reward**: The agent receives reward $r_t = f_{a_t}(x_t) + \epsilon_t$ where $\epsilon_t$ is noise
+- **Context Space**: X ⊆ ℝᵈ (d-dimensional context space)
+- **Context**: At time t, context xₜ ∈ X is revealed
+- **Arms**: K arms indexed by i ∈ {1, 2, ..., K}
+- **Reward Function**: Each arm i has a reward function fᵢ: X → ℝ
+- **Action**: At time t, the agent selects arm aₜ ∈ {1, 2, ..., K} based on context xₜ
+- **Reward**: The agent receives reward rₜ = f_{aₜ}(xₜ) + εₜ where εₜ is noise
 
 **Objective:**
 Maximize the expected cumulative reward:
 
-$$\max_{\pi} \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```
+max E[Σ(t=1 to T) rₜ]
+ π
+```
 
-where $\pi: \mathcal{X} \rightarrow \{1, 2, \ldots, K\}$ is a context-dependent policy.
+where π: X → {1, 2, ..., K} is a context-dependent policy.
 
 **Regret:**
 The contextual regret is:
 
-$$R(T) = \sum_{t=1}^T \max_{i} f_i(x_t) - \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```
+R(T) = Σ(t=1 to T) max fᵢ(xₜ) - E[Σ(t=1 to T) rₜ]
+                     i
+```
 
 **Key Differences from Traditional MAB:**
 1. **Context Dependence**: Arm rewards depend on the current context
@@ -75,10 +87,12 @@ $$R(T) = \sum_{t=1}^T \max_{i} f_i(x_t) - \mathbb{E}\left[\sum_{t=1}^T r_t\right
 **Description**: Selects arms randomly with equal probability regardless of context.
 
 **Mathematical Formulation**:
-$$P(a_t = i) = \frac{1}{K} \quad \forall i \in \{1, 2, \ldots, K\}$$
+```
+P(aₜ = i) = 1/K  ∀ i ∈ {1, 2, ..., K}
+```
 
-**Pros**: Simple baseline, ensures exploration
-**Cons**: Ignores context information completely, poor performance
+**Pros**: Simple baseline, ensures exploration  
+**Cons**: Ignores context information completely, poor performance  
 **Use Case**: Baseline comparison
 
 ### Epsilon-Greedy Linear
@@ -87,27 +101,27 @@ $$P(a_t = i) = \frac{1}{K} \quad \forall i \in \{1, 2, \ldots, K\}$$
 
 **Mathematical Formulation**:
 
-**Reward Model**: For each arm $i$, the reward is modeled as:
-$$r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon$$
+**Reward Model**: For each arm i, the reward is modeled as:
+```
+rᵢ = wᵢᵀx + bᵢ + ε
+```
 
-where $\mathbf{w}_i \in \mathbb{R}^d$ are weights, $b_i \in \mathbb{R}$ is bias, and $\epsilon \sim \mathcal{N}(0, \sigma^2)$ is noise.
+where wᵢ ∈ ℝᵈ are weights, bᵢ ∈ ℝ is bias, and ε ~ N(0, σ²) is noise.
 
 **Action Selection**:
-$$a_t = \begin{cases}
-\text{random arm} & \text{with probability } \epsilon \\
-\arg\max_{i} (\mathbf{w}_i^T \mathbf{x}_t + b_i) & \text{with probability } 1 - \epsilon
-\end{cases}$$
+```
+aₜ = { random arm                    with probability ε
+     { argmax(wᵢᵀxₜ + bᵢ)           with probability 1 - ε
+         i
+```
 
 **Parameter Update**: Using gradient descent on squared error loss:
-$$\mathcal{L}_i = \frac{1}{2}(r_t - \mathbf{w}_i^T \mathbf{x}_t - b_i)^2$$
+```
+Lᵢ = ½(rₜ - wᵢᵀxₜ - bᵢ)²
+```
 
-$$\mathbf{w}_i \leftarrow \mathbf{w}_i - \alpha \nabla_{\mathbf{w}_i} \mathcal{L}_i$$
-$$b_i \leftarrow b_i - \alpha \nabla_{b_i} \mathcal{L}_i$$
-
-where $\alpha$ is the learning rate.
-
-**Pros**: Simple, handles context, easy to implement
-**Cons**: Fixed exploration rate, assumes linear relationship
+**Pros**: Simple, handles context, easy to implement  
+**Cons**: Fixed exploration rate, assumes linear relationship  
 **Use Case**: When context-reward relationship is approximately linear
 
 ### Linear Thompson Sampling
@@ -116,31 +130,42 @@ where $\alpha$ is the learning rate.
 
 **Mathematical Formulation**:
 
-**Reward Model**: For each arm $i$:
-$$r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon$$
+**Reward Model**: For each arm i:
+```
+rᵢ = wᵢᵀx + bᵢ + ε
+```
 
-where $\epsilon \sim \mathcal{N}(0, \sigma^2)$.
+where ε ~ N(0, σ²).
 
 **Prior Distribution**: Normal conjugate prior:
-$$\mathbf{w}_i, b_i \sim \mathcal{N}(\mu_0, \sigma^2\Sigma_0)$$
+```
+wᵢ, bᵢ ~ N(μ₀, σ²Σ₀)
+```
 
-**Posterior Update**: After observing $(\mathbf{x}_t, r_t)$, the posterior is updated using Bayesian linear regression:
+**Posterior Update**: After observing (xₜ, rₜ), the posterior is updated using Bayesian linear regression:
 
-$$\Sigma_{\text{new}} = \left(\Sigma_{\text{old}}^{-1} + \frac{1}{\sigma^2} \mathbf{x}_{\text{aug}} \mathbf{x}_{\text{aug}}^T\right)^{-1}$$
+```
+Σ_new = (Σ_old⁻¹ + (1/σ²) x_aug x_augᵀ)⁻¹
 
-$$\mu_{\text{new}} = \Sigma_{\text{new}} \left(\Sigma_{\text{old}}^{-1} \mu_{\text{old}} + \frac{1}{\sigma^2} r_t \mathbf{x}_{\text{aug}}\right)$$
+μ_new = Σ_new (Σ_old⁻¹ μ_old + (1/σ²) rₜ x_aug)
+```
 
-where $\mathbf{x}_{\text{aug}} = [1, \mathbf{x}^T]^T$ includes the bias term.
+where x_aug = [1, xᵀ]ᵀ includes the bias term.
 
 **Action Selection**: Sample parameters and select best arm:
-$$\theta_i \sim \mathcal{N}(\mu_i, \Sigma_i)$$
-$$a_t = \arg\max_{i} \theta_i^T \mathbf{x}_{\text{aug}, t}$$
+```
+θᵢ ~ N(μᵢ, Σᵢ)
+aₜ = argmax θᵢᵀ x_aug,t
+      i
+```
 
-**Uncertainty Quantification**: The uncertainty for arm $i$ given context $\mathbf{x}$ is:
-$$\text{uncertainty}_i(\mathbf{x}) = \sqrt{\mathbf{x}_{\text{aug}}^T \Sigma_i \mathbf{x}_{\text{aug}}}$$
+**Uncertainty Quantification**: The uncertainty for arm i given context x is:
+```
+uncertainty_i(x) = √(x_augᵀ Σᵢ x_aug)
+```
 
-**Pros**: Handles context, theoretical guarantees, uncertainty quantification
-**Cons**: Assumes linear relationship, may not capture complex patterns
+**Pros**: Handles context, theoretical guarantees, uncertainty quantification  
+**Cons**: Assumes linear relationship, may not capture complex patterns  
 **Use Case**: When context-reward relationship is approximately linear
 
 ### Neural Network Contextual Bandit
@@ -149,32 +174,41 @@ $$\text{uncertainty}_i(\mathbf{x}) = \sqrt{\mathbf{x}_{\text{aug}}^T \Sigma_i \m
 
 **Mathematical Formulation**:
 
-**Network Architecture**: Feedforward neural network $f_\theta: \mathbb{R}^d \rightarrow \mathbb{R}^K$:
-$$f_\theta(\mathbf{x}) = \mathbf{W}_L \sigma(\mathbf{W}_{L-1} \sigma(\ldots \sigma(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) \ldots) + \mathbf{b}_{L-1}) + \mathbf{b}_L$$
+**Network Architecture**: Feedforward neural network f_θ: ℝᵈ → ℝᴷ:
+```
+f_θ(x) = W_L σ(W_{L-1} σ(...σ(W₁x + b₁)...) + b_{L-1}) + b_L
+```
 
-where $\sigma$ is the ReLU activation function, $\mathbf{W}_l$ and $\mathbf{b}_l$ are weights and biases of layer $l$.
+where σ is the ReLU activation function, W_l and b_l are weights and biases of layer l.
 
-**Q-Function**: The Q-value for arm $i$ given context $\mathbf{x}$ is:
-$$Q(\mathbf{x}, i) = f_\theta(\mathbf{x})_i$$
+**Q-Function**: The Q-value for arm i given context x is:
+```
+Q(x, i) = f_θ(x)_i
+```
 
 **Action Selection**:
-$$a_t = \begin{cases}
-\text{random arm} & \text{with probability } \epsilon \\
-\arg\max_{i} Q(\mathbf{x}_t, i) & \text{with probability } 1 - \epsilon
-\end{cases}$$
+```
+aₜ = { random arm           with probability ε
+     { argmax Q(xₜ, i)      with probability 1 - ε
+         i
+```
 
 **Loss Function**: Mean squared error loss:
-$$\mathcal{L}(\theta) = \frac{1}{|\mathcal{B}|} \sum_{(\mathbf{x}, a, r) \in \mathcal{B}} (r - Q(\mathbf{x}, a))^2$$
+```
+L(θ) = (1/|B|) Σ_{(x,a,r) ∈ B} (r - Q(x, a))²
+```
 
-where $\mathcal{B}$ is a batch of experiences from the replay buffer.
+where B is a batch of experiences from the replay buffer.
 
 **Parameter Update**: Using Adam optimizer:
-$$\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}(\theta)$$
+```
+θ ← θ - α ∇_θ L(θ)
+```
 
-**Experience Replay**: Store experiences $(\mathbf{x}_t, a_t, r_t)$ in buffer $\mathcal{D}$ and sample batches for training.
+**Experience Replay**: Store experiences (xₜ, aₜ, rₜ) in buffer D and sample batches for training.
 
-**Pros**: Can learn complex non-linear patterns, handles high-dimensional contexts
-**Cons**: More hyperparameters, requires more data, computationally expensive
+**Pros**: Can learn complex non-linear patterns, handles high-dimensional contexts  
+**Cons**: More hyperparameters, requires more data, computationally expensive  
 **Use Case**: When context-reward relationship is complex or non-linear
 
 ### Improved Neural Network Contextual Bandit
@@ -183,22 +217,30 @@ $$\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}(\theta)$$
 
 **Mathematical Formulation**: Same as basic neural network but with enhanced training:
 
-**Batch Normalization**: For each layer $l$:
-$$\text{BN}(\mathbf{h}_l) = \gamma_l \frac{\mathbf{h}_l - \boldsymbol{\mu}_l}{\sqrt{\boldsymbol{\sigma}_l^2 + \epsilon}} + \boldsymbol{\beta}_l$$
+**Batch Normalization**: For each layer l:
+```
+BN(h_l) = γ_l (h_l - μ_l)/√(σ_l² + ε) + β_l
+```
 
-where $\boldsymbol{\mu}_l$ and $\boldsymbol{\sigma}_l^2$ are computed over the batch.
+where μ_l and σ_l² are computed over the batch.
 
 **Gradient Clipping**: Prevent exploding gradients:
-$$\mathbf{g} \leftarrow \text{clip}(\mathbf{g}, -\text{max\_norm}, \text{max\_norm})$$
+```
+g ← clip(g, -max_norm, max_norm)
+```
 
 **Learning Rate Scheduling**: Exponential decay:
-$$\alpha_t = \alpha_0 \cdot \gamma^{t/\text{step\_size}}$$
+```
+αₜ = α₀ · γ^(t/step_size)
+```
 
 **Weight Decay**: L2 regularization:
-$$\mathcal{L}_{\text{reg}}(\theta) = \mathcal{L}(\theta) + \lambda \sum_{i} \|\theta_i\|^2$$
+```
+L_reg(θ) = L(θ) + λ Σᵢ ||θᵢ||²
+```
 
-**Pros**: Faster learning, better stability, improved performance
-**Cons**: Even more computationally expensive
+**Pros**: Faster learning, better stability, improved performance  
+**Cons**: Even more computationally expensive  
 **Use Case**: When you need the best possible neural network performance
 
 ## Results
@@ -261,4 +303,3 @@ python play_with_contextual_bandit.py
 - Lattimore, T., & Szepesvári, C. (2020). Bandit Algorithms
 - Agrawal, S., & Goyal, N. (2013). Thompson Sampling for Contextual Bandits with Linear Payoffs
 - Riquelme, C., et al. (2018). Deep Bayesian Bandits Showdown: An Empirical Comparison of Bayesian Deep Networks for Thompson Sampling
-
