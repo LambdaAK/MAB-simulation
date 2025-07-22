@@ -18,6 +18,7 @@ This project implements various Multi-Armed Bandit (MAB) and Contextual Multi-Ar
 - **Epsilon-Greedy Linear**: Linear models with epsilon-greedy exploration
 - **Linear Thompson Sampling**: Bayesian linear regression with Thompson Sampling
 - **Neural Network Contextual Bandit**: Deep learning approach with experience replay
+- **Improved Neural Network Contextual Bandit**: Enhanced neural network with better training strategies
 
 ## Installation
 
@@ -51,6 +52,26 @@ python run_contextual_experiments.py --experiment thompson --iterations 1000
 ```bash
 python play_with_contextual_bandit.py
 ```
+
+## Theory and Background
+
+### What is a Contextual Multi-Armed Bandit?
+
+A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Multi-Armed Bandit problem where the reward distributions of arms depend on a **context vector** that is revealed before each decision.
+
+#### Key Differences from Traditional MAB:
+
+1. **Context Dependence**: Arm rewards are not fixed but depend on the current context
+2. **Dynamic Environment**: The optimal arm can change based on the context
+3. **Learning Objective**: Learn the mapping from context to expected reward for each arm
+4. **Real-world Applications**: Online advertising, recommendation systems, clinical trials, etc.
+
+#### Mathematical Formulation:
+
+- **Context**: \(x_t \in \mathbb{R}^d\) (d-dimensional context vector at time t)
+- **Arms**: \(K\) arms, each with parameterized reward distribution
+- **Reward Model**: \(r_{i,t} = f_i(x_t) + \epsilon_t\) where \(f_i\) is arm-specific function
+- **Goal**: Maximize \(\sum_{t=1}^T r_{a_t,t}\) where \(a_t\) is the selected arm
 
 ## Algorithm Details
 
@@ -93,12 +114,35 @@ python play_with_contextual_bandit.py
 
 ### Contextual Multi-Armed Bandit Algorithms
 
+#### Random Contextual Policy
+- **Description**: Selects arms randomly regardless of context
+- **Mathematical Formulation**: `P(a_t = i) = 1/K` for all arms i
+- **Pros**: Simple baseline, ensures exploration
+- **Cons**: Ignores context information completely
+- **Use Case**: Baseline comparison for contextual bandits
+
+#### Epsilon-Greedy Linear
+- **Description**: Linear models with epsilon-greedy exploration strategy
+- **Mathematical Formulation**:
+  - Reward model: `r = bias + context @ weights + noise`
+  - Action selection: `a_t = argmax_i (bias_i + context @ weights_i)` with probability 1-ε
+  - Update: Gradient descent on squared error loss
+- **Pros**: Simple, handles context, easy to implement
+- **Cons**: Fixed exploration rate, assumes linear relationship
+- **Use Case**: When context-reward relationship is approximately linear
+
 #### Linear Thompson Sampling
 - **Description**: Models reward as linear function of context with Bayesian uncertainty
 - **Mathematical Formulation**:
   - Reward model: `r = bias + context @ weights + noise`
   - Posterior update: Normal-Inverse-Gamma conjugate prior
   - Action selection: Sample from posterior, select argmax
+  - Bayesian update: `μ_new = μ_old + (error/denominator) * Σ * context_with_bias`
+- **Key Features**:
+  - **Bias Term**: Includes intercept term for better modeling
+  - **Uncertainty Quantification**: Tracks uncertainty in parameter estimates
+  - **Adaptive Exploration**: Uncertainty multipliers adjust based on prediction errors
+  - **Numerical Stability**: Regularization and symmetry enforcement
 - **Pros**: Handles context, theoretical guarantees, uncertainty quantification
 - **Cons**: Assumes linear relationship, may not capture complex patterns
 - **Use Case**: When context-reward relationship is approximately linear
@@ -106,9 +150,9 @@ python play_with_contextual_bandit.py
 #### Neural Network Contextual Bandit
 - **Description**: Deep learning approach using neural networks with experience replay
 - **Architecture**:
-  - Input: Context vector
-  - Hidden layers: Configurable (default: [64, 32] with ReLU and Dropout)
-  - Output: Q-values for each arm
+  - Input: Context vector (d-dimensional)
+  - Hidden layers: [64, 32] with ReLU activation and Dropout(0.1)
+  - Output: Q-values for each arm (K-dimensional)
 - **Key Features**:
   - **Experience Replay**: Stores (context, action, reward) tuples in buffer
   - **Batch Learning**: Updates network using mini-batches from replay buffer
@@ -119,9 +163,30 @@ python play_with_contextual_bandit.py
   - Q-function: `Q(context, arm) = f_θ(context)[arm]` where f_θ is neural network
   - Loss: `L = MSE(Q(context, action), reward)`
   - Update: `θ = θ - α * ∇_θ L` using Adam optimizer
+- **Training Process**:
+  - **Experience Collection**: Store experiences in replay buffer
+  - **Batch Updates**: Sample batches and update network every 10 steps
+  - **Target Network**: Update target network every 100 steps
+  - **Posterior Updates**: Update Bayesian posteriors for uncertainty estimation
 - **Pros**: Can learn complex non-linear patterns, handles high-dimensional contexts
 - **Cons**: More hyperparameters, requires more data, computationally expensive
 - **Use Case**: When context-reward relationship is complex or non-linear
+
+#### Improved Neural Network Contextual Bandit
+- **Description**: Enhanced neural network with better training strategies
+- **Improvements over Basic Neural Network**:
+  - **Larger Architecture**: [128, 64] vs [64, 32] (more capacity)
+  - **Better Optimization**: Lower learning rate (0.0005), weight decay (1e-5), learning rate scheduler
+  - **Batch Normalization**: Stabilizes training and accelerates convergence
+  - **Gradient Clipping**: Prevents exploding gradients (max_norm=1.0)
+  - **More Frequent Updates**: Every 5 steps vs 10 steps
+  - **Larger Replay Buffer**: 2000 vs 1000 experiences
+  - **Better Initialization**: Xavier/Glorot initialization for weights
+  - **Higher Dropout**: 0.2 vs 0.1 for better regularization
+- **Mathematical Formulation**: Same as basic neural network but with enhanced training
+- **Pros**: Faster learning, better stability, improved performance
+- **Cons**: Even more computationally expensive
+- **Use Case**: When you need the best possible neural network performance
 
 ## Environment Types
 
@@ -149,20 +214,35 @@ python play_with_contextual_bandit.py
 - Interactive play mode
 
 ### Contextual Bandit Experiments
-- Policy comparison (Random, Epsilon-Greedy, Linear TS, Neural Network)
-- Thompson Sampling detailed analysis
-- Neural Network specific analysis
-- Train and watch mode for interactive decision observation
+- **Policy Comparison**: Compare all algorithms (Random, Epsilon-Greedy, Linear TS, Neural Network)
+- **Thompson Sampling Analysis**: Detailed analysis of Linear Thompson Sampling behavior
+- **Neural Network Analysis**: Specific analysis of neural network learning dynamics
+- **Train and Watch**: Interactive mode to observe model decision-making
+- **Long-term Training Comparison**: Extended experiments to compare Linear TS vs Neural Network over time
 
 ## Visualization
 
 The framework provides comprehensive visualizations:
-- Cumulative and average rewards over time
-- Regret analysis
-- Action distribution analysis
-- Context visualization
-- Policy-specific metrics (prediction errors, uncertainty, etc.)
-- Neural network specific plots (learning curves, replay buffer usage)
+- **Performance Metrics**: Cumulative and average rewards over time
+- **Regret Analysis**: Regret curves for all algorithms
+- **Action Distribution**: How often each arm is selected
+- **Context Visualization**: Heatmap of recent contexts
+- **Policy-specific Metrics**: Prediction errors, uncertainty, replay buffer usage
+- **Learning Analysis**: Learning rates, training phases, neural network specific plots
+
+## Key Insights and Findings
+
+### Neural Network Training Dynamics
+- **Parameter Complexity**: Neural networks have ~565x more parameters than linear models
+- **Learning Speed**: Neural networks learn more slowly but can capture complex patterns
+- **Data Requirements**: Need significantly more training data to reach optimal performance
+- **Environment Mismatch**: Linear models perform well when environment is approximately linear
+
+### Algorithm Performance Characteristics
+- **Linear Thompson Sampling**: Best performance for linear environments, fast convergence
+- **Neural Networks**: Slower initial learning but potential for complex pattern recognition
+- **Epsilon-Greedy**: Good baseline, simple and effective
+- **Random**: Baseline for comparison
 
 ## Example Usage
 
@@ -176,6 +256,12 @@ results = run_policy_comparison_experiment(n_iterations=2000)
 ```python
 from run_contextual_experiments import train_and_watch_experiment
 train_and_watch_experiment(n_train=2000, n_watch=20)
+```
+
+### Long-term Training Comparison
+```python
+from run_contextual_experiments import run_long_training_comparison
+results = run_long_training_comparison(n_iterations=5000)
 ```
 
 ### Creating Custom Environments
@@ -219,4 +305,11 @@ bandit = ContextualMultiArmedBandit(arms, seed=42)
 ## Contributing
 
 Feel free to add new policies, environments, or experiment types. The modular design makes it easy to extend the framework.
+
+## References
+
+- Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction
+- Lattimore, T., & Szepesvári, C. (2020). Bandit Algorithms
+- Agrawal, S., & Goyal, N. (2013). Thompson Sampling for Contextual Bandits with Linear Payoffs
+- Riquelme, C., et al. (2018). Deep Bayesian Bandits Showdown: An Empirical Comparison of Bayesian Deep Networks for Thompson Sampling
 
