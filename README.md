@@ -20,14 +20,18 @@ A **Multi-Armed Bandit (MAB)** is a sequential decision-making problem where an 
 **Objective:**
 The goal is to maximize the expected cumulative reward:
 
-$$\max_{\pi} \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```math
+\max_{\pi} \mathbb{E}\left[\sum_{t=1}^T r_t\right]
+```
 
 where $\pi$ is the policy that maps history to actions.
 
 **Regret:**
 The performance is measured in terms of regret, which is the difference between the optimal cumulative reward and the actual cumulative reward:
 
-$$R(T) = T \mu^* - \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```math
+R(T) = T \mu^* - \mathbb{E}\left[\sum_{t=1}^T r_t\right]
+```
 
 where $\mu^* = \max_{i} \mu_i$ is the expected reward of the optimal arm.
 
@@ -53,14 +57,18 @@ A **Contextual Multi-Armed Bandit (CMAB)** extends the traditional MAB problem b
 **Objective:**
 Maximize the expected cumulative reward:
 
-$$\max_{\pi} \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```math
+\max_{\pi} \mathbb{E}\left[\sum_{t=1}^T r_t\right]
+```
 
 where $\pi: \mathcal{X} \rightarrow \{1, 2, \ldots, K\}$ is a context-dependent policy.
 
 **Regret:**
 The contextual regret is:
 
-$$R(T) = \sum_{t=1}^T \max_{i} f_i(x_t) - \mathbb{E}\left[\sum_{t=1}^T r_t\right]$$
+```math
+R(T) = \sum_{t=1}^T \max_{i} f_i(x_t) - \mathbb{E}\left[\sum_{t=1}^T r_t\right]
+```
 
 **Key Differences from Traditional MAB:**
 1. **Context Dependence**: Arm rewards depend on the current context
@@ -75,7 +83,10 @@ $$R(T) = \sum_{t=1}^T \max_{i} f_i(x_t) - \mathbb{E}\left[\sum_{t=1}^T r_t\right
 **Description**: Selects arms randomly with equal probability regardless of context.
 
 **Mathematical Formulation**:
-$$P(a_t = i) = \frac{1}{K} \quad \forall i \in \{1, 2, \ldots, K\}$$
+
+```math
+P(a_t = i) = \frac{1}{K} \quad \forall i \in \{1, 2, \ldots, K\}
+```
 
 **Pros**: Simple baseline, ensures exploration
 **Cons**: Ignores context information completely, poor performance
@@ -88,21 +99,35 @@ $$P(a_t = i) = \frac{1}{K} \quad \forall i \in \{1, 2, \ldots, K\}$$
 **Mathematical Formulation**:
 
 **Reward Model**: For each arm $i$, the reward is modeled as:
-$$r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon$$
+
+```math
+r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon
+```
 
 where $\mathbf{w}_i \in \mathbb{R}^d$ are weights, $b_i \in \mathbb{R}$ is bias, and $\epsilon \sim \mathcal{N}(0, \sigma^2)$ is noise.
 
 **Action Selection**:
-$$a_t = \begin{cases}
+
+```math
+a_t = \begin{cases}
 \text{random arm} & \text{with probability } \epsilon \\
 \arg\max_{i} (\mathbf{w}_i^T \mathbf{x}_t + b_i) & \text{with probability } 1 - \epsilon
-\end{cases}$$
+\end{cases}
+```
 
 **Parameter Update**: Using gradient descent on squared error loss:
-$$\mathcal{L}_i = \frac{1}{2}(r_t - \mathbf{w}_i^T \mathbf{x}_t - b_i)^2$$
 
-$$\mathbf{w}_i \leftarrow \mathbf{w}_i - \alpha \nabla_{\mathbf{w}_i} \mathcal{L}_i$$
-$$b_i \leftarrow b_i - \alpha \nabla_{b_i} \mathcal{L}_i$$
+```math
+\mathcal{L}_i = \frac{1}{2}(r_t - \mathbf{w}_i^T \mathbf{x}_t - b_i)^2
+```
+
+```math
+\mathbf{w}_i \leftarrow \mathbf{w}_i - \alpha \nabla_{\mathbf{w}_i} \mathcal{L}_i
+```
+
+```math
+b_i \leftarrow b_i - \alpha \nabla_{b_i} \mathcal{L}_i
+```
 
 where $\alpha$ is the learning rate.
 
@@ -117,31 +142,46 @@ where $\alpha$ is the learning rate.
 **Mathematical Formulation**:
 
 **Reward Model**: For each arm $i$:
-$$r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon$$
+
+```math
+r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon
+```
 
 where $\epsilon \sim \mathcal{N}(0, \sigma^2)$.
 
 **Prior Distribution**: Normal conjugate prior:
-$$\mathbf{w}_i, b_i \sim \mathcal{N}(\mu_0, \sigma^2\Sigma_0)$$
+
+```math
+\mathbf{w}_i, b_i \sim \mathcal{N}(\mu_0, \sigma^2\Sigma_0)
+```
 
 **Posterior Update**: After observing $(\mathbf{x}_t, r_t)$, the posterior is updated using Bayesian linear regression:
 
-$$\Sigma_{\text{new}} = \left(\Sigma_{\text{old}}^{-1} + \frac{1}{\sigma^2} \mathbf{x}_{\text{aug}} \mathbf{x}_{\text{aug}}^T\right)^{-1}$$
+```math
+\Sigma_{\text{new}} = \left(\Sigma_{\text{old}}^{-1} + \frac{1}{\sigma^2} \mathbf{x}_{\text{aug}} \mathbf{x}_{\text{aug}}^T\right)^{-1}
+```
 
-$$\mu_{\text{new}} = \Sigma_{\text{new}} \left(\Sigma_{\text{old}}^{-1} \mu_{\text{old}} + \frac{1}{\sigma^2} r_t \mathbf{x}_{\text{aug}}\right)$$
+```math
+\mu_{\text{new}} = \Sigma_{\text{new}} \left(\Sigma_{\text{old}}^{-1} \mu_{\text{old}} + \frac{1}{\sigma^2} r_t \mathbf{x}_{\text{aug}}\right)
+```
 
 where $\mathbf{x}_{\text{aug}} = [1, \mathbf{x}^T]^T$ includes the bias term.
 
-**Action Selection**:Sample parameters and select best arm:
+**Action Selection**: Sample parameters and select best arm:
 
+```math
+\theta_i \sim \mathcal{N}(\mu_i, \Sigma_i)
+```
 
-$$\theta_i \sim \mathcal{N}(\mu_i, \Sigma_i)$$
-
-
-$$a_t = \arg\max_{i} \theta_i^T \mathbf{x}_{\text{aug}, t}$$
+```math
+a_t = \arg\max_{i} \theta_i^T \mathbf{x}_{\text{aug}, t}
+```
 
 **Uncertainty Quantification**: The uncertainty for arm $i$ given context $\mathbf{x}$ is:
-$$\text{uncertainty}_i(\mathbf{x}) = \sqrt{\mathbf{x}_{\text{aug}}^T \Sigma_i \mathbf{x}_{\text{aug}}}$$
+
+```math
+\text{uncertainty}_i(\mathbf{x}) = \sqrt{\mathbf{x}_{\text{aug}}^T \Sigma_i \mathbf{x}_{\text{aug}}}
+```
 
 **Pros**: Handles context, theoretical guarantees, uncertainty quantification
 **Cons**: Assumes linear relationship, may not capture complex patterns
@@ -154,26 +194,41 @@ $$\text{uncertainty}_i(\mathbf{x}) = \sqrt{\mathbf{x}_{\text{aug}}^T \Sigma_i \m
 **Mathematical Formulation**:
 
 **Network Architecture**: Feedforward neural network $f_\theta: \mathbb{R}^d \rightarrow \mathbb{R}^K$:
-$$f_\theta(\mathbf{x}) = \mathbf{W}_L \sigma(\mathbf{W}_{L-1} \sigma(\ldots \sigma(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) \ldots) + \mathbf{b}_{L-1}) + \mathbf{b}_L$$
+
+```math
+f_\theta(\mathbf{x}) = \mathbf{W}_L \sigma(\mathbf{W}_{L-1} \sigma(\ldots \sigma(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) \ldots) + \mathbf{b}_{L-1}) + \mathbf{b}_L
+```
 
 where $\sigma$ is the ReLU activation function, $\mathbf{W}_l$ and $\mathbf{b}_l$ are weights and biases of layer $l$.
 
 **Q-Function**: The Q-value for arm $i$ given context $\mathbf{x}$ is:
-$$Q(\mathbf{x}, i) = f_\theta(\mathbf{x})_i$$
+
+```math
+Q(\mathbf{x}, i) = f_\theta(\mathbf{x})_i
+```
 
 **Action Selection**:
-$$a_t = \begin{cases}
+
+```math
+a_t = \begin{cases}
 \text{random arm} & \text{with probability } \epsilon \\
 \arg\max_{i} Q(\mathbf{x}_t, i) & \text{with probability } 1 - \epsilon
-\end{cases}$$
+\end{cases}
+```
 
 **Loss Function**: Mean squared error loss:
-$$\mathcal{L}(\theta) = \frac{1}{|\mathcal{B}|} \sum_{(\mathbf{x}, a, r) \in \mathcal{B}} (r - Q(\mathbf{x}, a))^2$$
+
+```math
+\mathcal{L}(\theta) = \frac{1}{|\mathcal{B}|} \sum_{(\mathbf{x}, a, r) \in \mathcal{B}} (r - Q(\mathbf{x}, a))^2
+```
 
 where $\mathcal{B}$ is a batch of experiences from the replay buffer.
 
 **Parameter Update**: Using Adam optimizer:
-$$\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}(\theta)$$
+
+```math
+\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}(\theta)
+```
 
 **Experience Replay**: Store experiences $(\mathbf{x}_t, a_t, r_t)$ in buffer $\mathcal{D}$ and sample batches for training.
 
@@ -188,18 +243,30 @@ $$\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}(\theta)$$
 **Mathematical Formulation**: Same as basic neural network but with enhanced training:
 
 **Batch Normalization**: For each layer $l$:
-$$\text{BN}(\mathbf{h}_l) = \gamma_l \frac{\mathbf{h}_l - \boldsymbol{\mu}_l}{\sqrt{\boldsymbol{\sigma}_l^2 + \epsilon}} + \boldsymbol{\beta}_l$$
+
+```math
+\text{BN}(\mathbf{h}_l) = \gamma_l \frac{\mathbf{h}_l - \boldsymbol{\mu}_l}{\sqrt{\boldsymbol{\sigma}_l^2 + \epsilon}} + \boldsymbol{\beta}_l
+```
 
 where $\boldsymbol{\mu}_l$ and $\boldsymbol{\sigma}_l^2$ are computed over the batch.
 
 **Gradient Clipping**: Prevent exploding gradients:
-$$\mathbf{g} \leftarrow \text{clip}(\mathbf{g}, -\text{max\_norm}, \text{max\_norm})$$
+
+```math
+\mathbf{g} \leftarrow \text{clip}(\mathbf{g}, -\text{max\_norm}, \text{max\_norm})
+```
 
 **Learning Rate Scheduling**: Exponential decay:
-$$\alpha_t = \alpha_0 \cdot \gamma^{t/\text{step\_size}}$$
+
+```math
+\alpha_t = \alpha_0 \cdot \gamma^{t/\text{step\_size}}
+```
 
 **Weight Decay**: L2 regularization:
-$$\mathcal{L}_{\text{reg}}(\theta) = \mathcal{L}(\theta) + \lambda \sum_{i} \|\theta_i\|^2$$
+
+```math
+\mathcal{L}_{\text{reg}}(\theta) = \mathcal{L}(\theta) + \lambda \sum_{i} \|\theta_i\|^2
+```
 
 **Pros**: Faster learning, better stability, improved performance
 **Cons**: Even more computationally expensive
