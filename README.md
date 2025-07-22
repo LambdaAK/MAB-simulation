@@ -68,10 +68,10 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 
 #### Mathematical Formulation:
 
-- **Context**: \(x_t \in \mathbb{R}^d\) (d-dimensional context vector at time t)
-- **Arms**: \(K\) arms, each with parameterized reward distribution
-- **Reward Model**: \(r_{i,t} = f_i(x_t) + \epsilon_t\) where \(f_i\) is arm-specific function
-- **Goal**: Maximize \(\sum_{t=1}^T r_{a_t,t}\) where \(a_t\) is the selected arm
+- **Context**: $x_t \in \mathbb{R}^d$ (d-dimensional context vector at time t)
+- **Arms**: $K$ arms, each with parameterized reward distribution
+- **Reward Model**: $r_{i,t} = f_i(x_t) + \epsilon_t$ where $f_i$ is arm-specific function
+- **Goal**: Maximize $\sum_{t=1}^T r_{a_t,t}$ where $a_t$ is the selected arm
 
 ## Algorithm Details
 
@@ -86,8 +86,8 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 #### Epsilon-Greedy Policy
 - **Description**: With probability ε, selects random arm; otherwise selects best estimated arm
 - **Mathematical Formulation**: 
-  - Action selection: `a_t = argmax_i Q_i` with probability 1-ε, random with probability ε
-  - Value update: `Q_i = Q_i + α(r_t - Q_i)` where α is learning rate
+  - Action selection: $a_t = \arg\max_i Q_i$ with probability $1-\epsilon$, random with probability $\epsilon$
+  - Value update: $Q_i = Q_i + \alpha(r_t - Q_i)$ where $\alpha$ is learning rate
 - **Pros**: Simple, effective exploration/exploitation balance
 - **Cons**: Fixed exploration rate, may not be optimal
 - **Use Case**: Good baseline for simple problems
@@ -95,9 +95,9 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 #### Upper Confidence Bound (UCB) Policy
 - **Description**: Balances estimated reward with uncertainty using confidence bounds
 - **Mathematical Formulation**: 
-  - UCB value: `UCB_i = Q_i + c * sqrt(ln(t) / N_i)`
-  - Action selection: `a_t = argmax_i UCB_i`
-  - Where c=2.0 (theoretical constant), t is time step, N_i is number of pulls for arm i
+  - UCB value: $\text{UCB}_i = Q_i + c \sqrt{\frac{\ln t}{N_i}}$
+  - Action selection: $a_t = \arg\max_i \text{UCB}_i$
+  - Where $c=2.0$ (theoretical constant), $t$ is time step, $N_i$ is number of pulls for arm $i$
 - **Pros**: No parameters to tune, theoretical guarantees
 - **Cons**: Assumes bounded rewards, may be conservative
 - **Use Case**: When theoretical guarantees are important
@@ -105,9 +105,9 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 #### Thompson Sampling
 - **Description**: Bayesian approach that samples from posterior distributions
 - **Mathematical Formulation**:
-  - For Beta posterior: `θ_i ~ Beta(α_i, β_i)`
-  - Action selection: `a_t = argmax_i θ_i`
-  - Update: `α_i += r_t`, `β_i += (1 - r_t)` for binary rewards
+  - For Beta posterior: $\theta_i \sim \text{Beta}(\alpha_i, \beta_i)$
+  - Action selection: $a_t = \arg\max_i \theta_i$
+  - Update: $\alpha_i \leftarrow \alpha_i + r_t$, $\beta_i \leftarrow \beta_i + (1 - r_t)$ for binary rewards
 - **Pros**: Natural exploration/exploitation balance, good empirical performance
 - **Cons**: Computationally more expensive, requires conjugate priors
 - **Use Case**: When good empirical performance is desired
@@ -116,7 +116,7 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 
 #### Random Contextual Policy
 - **Description**: Selects arms randomly regardless of context
-- **Mathematical Formulation**: `P(a_t = i) = 1/K` for all arms i
+- **Mathematical Formulation**: $P(a_t = i) = \frac{1}{K}$ for all arms $i$
 - **Pros**: Simple baseline, ensures exploration
 - **Cons**: Ignores context information completely
 - **Use Case**: Baseline comparison for contextual bandits
@@ -124,8 +124,8 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 #### Epsilon-Greedy Linear
 - **Description**: Linear models with epsilon-greedy exploration strategy
 - **Mathematical Formulation**:
-  - Reward model: `r = bias + context @ weights + noise`
-  - Action selection: `a_t = argmax_i (bias_i + context @ weights_i)` with probability 1-ε
+  - Reward model: $r = \text{bias} + \mathbf{x}^T \mathbf{w} + \epsilon$
+  - Action selection: $a_t = \arg\max_i (\text{bias}_i + \mathbf{x}^T \mathbf{w}_i)$ with probability $1-\epsilon$
   - Update: Gradient descent on squared error loss
 - **Pros**: Simple, handles context, easy to implement
 - **Cons**: Fixed exploration rate, assumes linear relationship
@@ -134,10 +134,10 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 #### Linear Thompson Sampling
 - **Description**: Models reward as linear function of context with Bayesian uncertainty
 - **Mathematical Formulation**:
-  - Reward model: `r = bias + context @ weights + noise`
+  - Reward model: $r = \text{bias} + \mathbf{x}^T \mathbf{w} + \epsilon$
   - Posterior update: Normal-Inverse-Gamma conjugate prior
   - Action selection: Sample from posterior, select argmax
-  - Bayesian update: `μ_new = μ_old + (error/denominator) * Σ * context_with_bias`
+  - Bayesian update: $\boldsymbol{\mu}_{\text{new}} = \boldsymbol{\mu}_{\text{old}} + \frac{\text{error}}{\text{denominator}} \boldsymbol{\Sigma} \mathbf{x}_{\text{with bias}}$
 - **Key Features**:
   - **Bias Term**: Includes intercept term for better modeling
   - **Uncertainty Quantification**: Tracks uncertainty in parameter estimates
@@ -150,19 +150,19 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 #### Neural Network Contextual Bandit
 - **Description**: Deep learning approach using neural networks with experience replay
 - **Architecture**:
-  - Input: Context vector (d-dimensional)
-  - Hidden layers: [64, 32] with ReLU activation and Dropout(0.1)
-  - Output: Q-values for each arm (K-dimensional)
+  - Input: Context vector ($d$-dimensional)
+  - Hidden layers: $[64, 32]$ with ReLU activation and Dropout(0.1)
+  - Output: Q-values for each arm ($K$-dimensional)
 - **Key Features**:
-  - **Experience Replay**: Stores (context, action, reward) tuples in buffer
+  - **Experience Replay**: Stores $(\text{context}, \text{action}, \text{reward})$ tuples in buffer
   - **Batch Learning**: Updates network using mini-batches from replay buffer
   - **Target Network**: Stable learning with periodic target network updates
   - **Exploration**: Epsilon-greedy exploration strategy
   - **Uncertainty Estimation**: Bayesian posterior over linear parameters for uncertainty
 - **Mathematical Formulation**:
-  - Q-function: `Q(context, arm) = f_θ(context)[arm]` where f_θ is neural network
-  - Loss: `L = MSE(Q(context, action), reward)`
-  - Update: `θ = θ - α * ∇_θ L` using Adam optimizer
+  - Q-function: $Q(\mathbf{x}, a) = f_\theta(\mathbf{x})[a]$ where $f_\theta$ is neural network
+  - Loss: $\mathcal{L} = \text{MSE}(Q(\mathbf{x}, a), r)$
+  - Update: $\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}$ using Adam optimizer
 - **Training Process**:
   - **Experience Collection**: Store experiences in replay buffer
   - **Batch Updates**: Sample batches and update network every 10 steps
@@ -175,10 +175,10 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 #### Improved Neural Network Contextual Bandit
 - **Description**: Enhanced neural network with better training strategies
 - **Improvements over Basic Neural Network**:
-  - **Larger Architecture**: [128, 64] vs [64, 32] (more capacity)
-  - **Better Optimization**: Lower learning rate (0.0005), weight decay (1e-5), learning rate scheduler
+  - **Larger Architecture**: $[128, 64]$ vs $[64, 32]$ (more capacity)
+  - **Better Optimization**: Lower learning rate $(0.0005)$, weight decay $(10^{-5})$, learning rate scheduler
   - **Batch Normalization**: Stabilizes training and accelerates convergence
-  - **Gradient Clipping**: Prevents exploding gradients (max_norm=1.0)
+  - **Gradient Clipping**: Prevents exploding gradients $(\max\_\text{norm}=1.0)$
   - **More Frequent Updates**: Every 5 steps vs 10 steps
   - **Larger Replay Buffer**: 2000 vs 1000 experiences
   - **Better Initialization**: Xavier/Glorot initialization for weights
@@ -198,12 +198,12 @@ A **Contextual Multi-Armed Bandit (CMAB)** is an extension of the traditional Mu
 ### Contextual Multi-Armed Bandit Environment
 - **Arms**: Each arm has a parameterized reward distribution
 - **Context**: Vector that parameterizes arm rewards
-- **Rewards**: `r = f_arm(context) + noise` where f_arm is arm-specific function
+- **Rewards**: $r = f_{\text{arm}}(\mathbf{x}) + \epsilon$ where $f_{\text{arm}}$ is arm-specific function
 - **Goal**: Learn context-reward mapping and maximize cumulative reward
 
 #### Parameterized Distributions
-- **LinearNormalDistribution**: `r ~ N(context @ weights + bias, std)`
-- **LinearBernoulliDistribution**: `P(r=1) = sigmoid(context @ weights + bias)`
+- **LinearNormalDistribution**: $r \sim \mathcal{N}(\mathbf{x}^T \mathbf{w} + \text{bias}, \sigma)$
+- **LinearBernoulliDistribution**: $P(r=1) = \sigma(\mathbf{x}^T \mathbf{w} + \text{bias})$ where $\sigma$ is sigmoid
 - **CustomDistribution**: Arbitrary function mapping context to distribution
 
 ## Experiment Framework
@@ -233,7 +233,7 @@ The framework provides comprehensive visualizations:
 ## Key Insights and Findings
 
 ### Neural Network Training Dynamics
-- **Parameter Complexity**: Neural networks have ~565x more parameters than linear models
+- **Parameter Complexity**: Neural networks have $\sim 565\times$ more parameters than linear models
 - **Learning Speed**: Neural networks learn more slowly but can capture complex patterns
 - **Data Requirements**: Need significantly more training data to reach optimal performance
 - **Environment Mismatch**: Linear models perform well when environment is approximately linear
