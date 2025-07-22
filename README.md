@@ -378,7 +378,7 @@ This experiment compares the learning dynamics of various neural network archite
 - The plot below shows the smoothed rolling average reward (window=50) for each architecture, along with the optimal average reward (dashed black line) over time.
 - This allows for direct comparison of learning speed, stability, and final performance across architectures.
 
-![Neural Network Architecture Trajectory Comparison](<INSERT_YOUR_IMAGE_URL_HERE>)
+![Neural Network Architecture Trajectory Comparison](https://github.com/LambdaAK/MAB-simulation/blob/main/Experiment%20pictures/exp3.png)
 
 **Key takeaway:**  
 Deeper and wider networks do not always guarantee better performance. The optimal architecture depends on the complexity of the environment and the amount of training. This experiment helps visualize which architectures learn faster or achieve higher rewards in high-dimensional contextual bandit problems.
