@@ -121,10 +121,10 @@ $$r_i = \mathbf{w}_i^T \mathbf{x} + b_i + \epsilon$$
 
 where $\epsilon \sim \mathcal{N}(0, \sigma^2)$.
 
-**Prior Distribution**: Normal-Inverse-Gamma conjugate prior:
-$$\mathbf{w}_i, b_i \sim \mathcal{N}(\boldsymbol{\mu}_0, \sigma^2 \boldsymbol{\Sigma}_0)$$
+**Prior Distribution**: Normal conjugate prior:
+$$\mathbf{w}_i, b_i \sim \mathcal{N}(\boldsymbol{\mu}_0, \sigma^2\boldsymbol{\Sigma}_0)$$
 
-**Posterior Update**: After observing $(x_t, r_t)$, the posterior is updated using Bayesian linear regression:
+**Posterior Update**: After observing $(\mathbf{x}_t, r_t)$, the posterior is updated using Bayesian linear regression:
 
 $$\boldsymbol{\Sigma}_{\text{new}} = \left(\boldsymbol{\Sigma}_{\text{old}}^{-1} + \frac{1}{\sigma^2} \mathbf{x}_{\text{aug}} \mathbf{x}_{\text{aug}}^T\right)^{-1}$$
 
