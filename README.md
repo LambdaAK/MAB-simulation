@@ -346,7 +346,7 @@ This experiment demonstrates the importance of using context in multi-armed band
 - The left plot shows **cumulative regret**: how much reward each algorithm missed out on compared to the optimal policy.
 - The right plot shows **average reward** over time, with a dashed line for the optimal average reward.
 
-![Context-Aware vs. Context-Ignorant Bandit Algorithms](experiment/exp1.png)
+![Context-Aware vs. Context-Ignorant Bandit Algorithms](https://github.com/LambdaAK/MAB-simulation/blob/main/Experiment%20pictures/exp1.png)
 
 **Key takeaway:**  
 Context-aware algorithms (especially Linear Thompson Sampling and Neural Network Contextual) achieve much lower regret and higher average reward than context-ignorant algorithms. The Contextless Epsilon-Greedy policy, which ignores context, performs significantly worse, highlighting the value of leveraging contextual information in decision-making.
