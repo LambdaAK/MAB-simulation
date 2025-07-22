@@ -686,14 +686,88 @@ def run_epsilon_greedy_hyperparam_experiment(n_iterations: int = 1000, seed: int
     plt.show()
 
 
+def moving_average(data, window_size):
+    return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+
+
+def run_nn_architecture_trajectory_experiment(n_iterations: int = 2000, seed: int = 42):
+    """Compare different neural network architectures and their training trajectories over time."""
+    print("\n===== Neural Network Architecture Trajectory Comparison =====\n")
+    n_arms = 5
+    context_dim = 10
+    bandit = create_experiment_bandit(n_arms=n_arms, context_dim=context_dim, seed=seed)
+
+    # Define a range of architectures (from simple to complex)
+    architectures = [
+        ([16], "NN [16]"),
+        ([32], "NN [32]"),
+        ([64], "NN [64]"),
+        ([64, 32], "NN [64, 32]"),
+        ([128, 64], "NN [128, 64]"),
+        ([128, 64, 32], "NN [128, 64, 32]"),
+        ([256, 256, 128, 64, 32], "NN [256, 256, 128, 64, 32]"),  # Added deep architecture
+    ]
+
+    policies = []
+    for hidden_dims, label in architectures:
+        policies.append((NeuralNetworkContextualPolicy(n_arms, context_dim, hidden_dims=hidden_dims, seed=seed), label))
+
+    results = []
+    optimal_rewards = None
+    for policy, name in policies:
+        print(f"Running {name} for {n_iterations} iterations...")
+        bandit.reset()
+        policy.reset()
+        rewards = []
+        avg_rewards = []
+        optimal_rewards_this = []
+        for step in range(n_iterations):
+            context = bandit.generate_context()
+            action = policy.select_action(context)
+            reward, _ = bandit.pull_arm(action, context)
+            policy.update(context, action, reward)
+            rewards.append(reward)
+            avg_rewards.append(np.mean(rewards[-100:]))  # Rolling average
+            # Track optimal reward for this context
+            optimal_rewards_this.append(bandit.get_optimal_reward(context))
+        results.append({
+            'name': name,
+            'avg_rewards': avg_rewards,
+        })
+        # Store optimal rewards from the first run for plotting
+        if optimal_rewards is None:
+            optimal_rewards = optimal_rewards_this
+
+    # Compute optimal average reward trajectory (cumulative mean)
+    optimal_avg = np.cumsum(optimal_rewards) / (np.arange(len(optimal_rewards)) + 1)
+
+    # Plot average reward trajectory
+    plt.figure(figsize=(8, 6))
+    window_size = 50
+    for res in results:
+        smoothed = moving_average(res['avg_rewards'], window_size)
+        plt.plot(np.arange(window_size-1, len(res['avg_rewards'])), smoothed, label=res['name'])
+    smoothed_optimal = moving_average(optimal_avg, window_size)
+    plt.plot(np.arange(window_size-1, len(optimal_avg)), smoothed_optimal, label="Optimal Avg Reward", linestyle="--", color="black")
+    plt.title("Average Reward Trajectory (NN Architectures)")
+    plt.xlabel("Step")
+    plt.ylabel(f"Smoothed Rolling Avg Reward (window={window_size})")
+    plt.legend(fontsize=8)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+    input("Press Enter to continue...")
+
+
 def interactive_experiment():
     print("Contextual Bandit Demo Menu:")
     print("1. Context-aware vs. context-ignorant policies")
     print("2. Nonlinear context bandit demo (neural network advantage)")
     print("3. Epsilon-Greedy Linear: Hyperparameter Comparison")
+    print("4. Neural Network Architecture Trajectory Comparison")
     while True:
         try:
-            choice = input("Enter choice (1-3): ").strip()
+            choice = input("Enter choice (1-4): ").strip()
             if choice == "1":
                 n_iter = int(input("Number of iterations (default 1000): ") or "1000")
                 run_context_aware_vs_ignorant_experiment(n_iter)
@@ -706,8 +780,12 @@ def interactive_experiment():
                 n_iter = int(input("Number of iterations (default 1000): ") or "1000")
                 run_epsilon_greedy_hyperparam_experiment(n_iter)
                 break
+            elif choice == "4":
+                n_iter = int(input("Number of iterations (default 2000): ") or "2000")
+                run_nn_architecture_trajectory_experiment(n_iter)
+                break
             else:
-                print("Please enter 1, 2, or 3")
+                print("Please enter 1, 2, 3, or 4")
         except ValueError:
             print("Please enter a valid number")
         except KeyboardInterrupt:
@@ -809,9 +887,9 @@ def run_nonlinear_experiment(n_iterations: int = 1000, seed: int = 123):
 def main():
     parser = argparse.ArgumentParser(description='Contextual Bandit Experiments')
     parser.add_argument('--experiment', '-e', type=str, 
-                       choices=['comparison', 'thompson', 'interactive'],
+                       choices=['comparison', 'thompson', 'interactive', 'nn_traj'],
                        default='interactive',
-                       help='Experiment type: comparison, thompson, interactive')
+                       help='Experiment type: comparison, thompson, interactive, nn_traj')
     parser.add_argument('--iterations', '-i', type=int, default=2000,
                        help='Number of iterations (default: 2000)')
     args = parser.parse_args()
@@ -821,6 +899,8 @@ def main():
         run_policy_comparison_experiment(args.iterations)
     elif args.experiment == 'thompson':
         run_thompson_sampling_analysis(args.iterations)
+    elif args.experiment == 'nn_traj':
+        run_nn_architecture_trajectory_experiment(args.iterations)
     elif args.experiment == 'interactive':
         interactive_experiment()
 

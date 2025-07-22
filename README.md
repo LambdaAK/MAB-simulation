@@ -361,6 +361,28 @@ This experiment investigates how the choice of the epsilon parameter in the Epsi
 **Key takeaway:**  
 Smaller values of epsilon (less random exploration) generally lead to lower regret and higher average reward in this linear contextual bandit setting. However, too little exploration (very small epsilon) can risk missing out on learning about better arms early on, while too much exploration (large epsilon) leads to consistently worse performance.
 
+## Experiment 3: Neural Network Architecture Trajectory Comparison
+
+This experiment compares the learning dynamics of various neural network architectures in a contextual bandit setting with a 10-dimensional context vector. We evaluate how network depth and width affect the agent's ability to learn optimal actions over time.
+
+**Architectures compared:**
+- NN [16]
+- NN [32]
+- NN [64]
+- NN [64, 32]
+- NN [128, 64]
+- NN [128, 64, 32]
+- NN [256, 256, 128, 64, 32] (deep network)
+
+**Results:**
+- The plot below shows the smoothed rolling average reward (window=50) for each architecture, along with the optimal average reward (dashed black line) over time.
+- This allows for direct comparison of learning speed, stability, and final performance across architectures.
+
+![Neural Network Architecture Trajectory Comparison](<INSERT_YOUR_IMAGE_URL_HERE>)
+
+**Key takeaway:**  
+Deeper and wider networks do not always guarantee better performance. The optimal architecture depends on the complexity of the environment and the amount of training. This experiment helps visualize which architectures learn faster or achieve higher rewards in high-dimensional contextual bandit problems.
+
 ## References
 
 - Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction
